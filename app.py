@@ -6,11 +6,12 @@
 #  Cómo está organizado este archivo:
 #   1. Configuración y diseño (colores, letras, estilo)
 #   2. Datos reales (las respuestas correctas)
-#   3. Las preguntas
+#   3. Las preguntas y los perfiles
 #   4. Funciones: puntaje, gráficos, guardar respuestas, IA
-#   5. Pantallas: inicio → sobre vos → preguntas → jubilación → resultado
+#   5. Pantallas: inicio → sobre vos → preguntas → jubilación → percepción → resultado
 # =============================================================
 
+import random
 import urllib.parse
 from datetime import datetime
 from pathlib import Path
@@ -27,42 +28,69 @@ NOMBRE_APP = "Al Dato"   # ← cambiar acá el nombre cuando lo elijas
 st.set_page_config(page_title=NOMBRE_APP, page_icon="🪙", layout="wide", initial_sidebar_state="collapsed")
 
 ESPRESSO, CHOCOLATE, CARAMELO, CREMA, ARENA = "#2B1D14", "#4A2F22", "#C08552", "#F5EDE3", "#E8DCCB"
-VERDE, ROJO = "#4E7A55", "#A3472F"
+VERDE, ROJO, WHATSAPP = "#4E7A55", "#A3472F", "#25D366"
 
 CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 html, body, [data-testid="stAppViewContainer"], .stApp {background: CREMA; color: ESPRESSO; font-family: 'Inter', sans-serif;}
 header[data-testid="stHeader"], #MainMenu, footer {display: none !important;}
-.block-container {max-width: 860px; padding: 2.5rem 1.4rem 4rem 1.4rem;}
+.block-container {max-width: 880px; padding: 2.5rem 1.4rem 4rem 1.4rem;}
 body {overflow-x: hidden;}
-h1, h2, h3, .serif {font-family: 'Fraunces', serif !important; color: ESPRESSO; letter-spacing: -0.02em;}
+h1, h2, h3, .titulo {font-family: 'Space Grotesk', sans-serif !important; color: ESPRESSO; letter-spacing: -0.03em;}
 p, li, label, .stMarkdown {font-size: 1.08rem;}
 
-/* --- Portada a pantalla completa --- */
-.hero {background: ESPRESSO; color: CREMA; margin: -3rem calc(-50vw + 50%) 0 calc(-50vw + 50%);
-       width: 100vw; min-height: 88vh; display: flex; align-items: center; justify-content: center; padding: 3rem 1.6rem;}
-.hero-in {max-width: 860px; width: 100%;}
-.hero .kicker {font-size: 0.85rem; letter-spacing: 0.22em; text-transform: uppercase; color: CARAMELO; font-weight: 600;}
-.hero h1 {color: CREMA !important; font-size: clamp(2.3rem, 7vw, 4.4rem); line-height: 1.02; font-weight: 900; margin: 0.6rem 0 1.4rem 0; padding: 0;}
-.hero p {color: #D9CBBB; font-size: 1.15rem; max-width: 560px; margin: 0.3rem 0;}
-.hero .oro {color: CARAMELO; font-family: 'Fraunces', serif; font-style: italic; font-size: 1.45rem; margin-top: 1rem;}
-.hero svg {width: 100%; max-width: 560px; height: auto; margin: 1.2rem 0 0.4rem -0.4rem;}
-.chips {margin-top: 1.4rem;}
+/* --- Portada: fondo oscuro de borde a borde (arriba, el botón y abajo) --- */
+.hero-arriba, .hero-abajo {background: ESPRESSO; color: CREMA; width: 100vw; margin-left: calc(-50vw + 50%);}
+.hero-arriba {margin-top: -3rem; margin-bottom: -3px; padding: 4.5rem 1.4rem 1.6rem 1.4rem;}
+.hero-abajo {padding: 0.5rem 1.6rem 3rem 1.6rem; margin-top: -1rem;}
+.hero-grilla {max-width: 880px; margin: 0 auto; display: grid; grid-template-columns: 1.4fr 1fr; gap: 2rem; align-items: center;}
+.hero-texto {max-width: 640px;}
+.hero-arriba .kicker {font-size: 0.85rem; letter-spacing: 0.22em; text-transform: uppercase; color: CARAMELO; font-weight: 600;}
+.hero-arriba h1 {font-family: 'Space Grotesk', sans-serif; color: CREMA !important; font-size: clamp(2.2rem, 5.6vw, 3.9rem);
+                 line-height: 1.02; font-weight: 700; margin: 0.6rem 0 1.2rem 0; padding: 0; letter-spacing: -0.035em;}
+.hero-arriba p {color: #D9CBBB; font-size: 1.12rem; margin: 0.3rem 0;}
+.hero-arriba .oro {color: CARAMELO; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 1.4rem; margin-top: 0.9rem;}
+.chips {margin-top: 1.2rem;}
 .chip {display: inline-block; border: 1px solid rgba(245,237,227,0.25); color: CREMA; border-radius: 999px;
        padding: 0.35rem 0.95rem; margin: 0.25rem 0.35rem 0.25rem 0; font-size: 0.92rem;}
+.ilus svg {width: 100%; height: auto;}
+.ilus-celu {display: none; max-width: 420px; margin: 0 auto;}
+@media (max-width: 760px) {
+  .hero-grilla {grid-template-columns: 1fr;}
+  .ilus-compu {display: none;}
+  .ilus-celu {display: block;}
+}
+/* El botón de empezar queda dentro del fondo oscuro */
+.st-key-boton_gigante {background: ESPRESSO; box-shadow: 0 0 0 100vmax ESPRESSO; clip-path: inset(0 -100vmax); padding: 0.4rem 0 1.4rem 0;}
+.st-key-boton_gigante {margin-top: -2px;}
+.st-key-boton_gigante button {min-height: 4.4rem !important; max-width: 560px;}
+.st-key-boton_gigante button p {font-size: 1.35rem !important; font-weight: 800 !important; letter-spacing: 0.08em;}
 
 /* --- Textos de las pantallas --- */
 .etiqueta {font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.2em; color: CARAMELO; font-weight: 700; margin-top: 1rem;}
-.pregunta {font-family: 'Fraunces', serif; font-size: clamp(1.6rem, 4.6vw, 2.4rem); font-weight: 700; line-height: 1.18; margin: 0.5rem 0 1.4rem 0; color: ESPRESSO;}
-.ok {color: VERDE; font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 900;}
-.mal {color: ROJO; font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 900;}
+.pregunta {font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.6rem, 4.4vw, 2.3rem); font-weight: 700; line-height: 1.15;
+           margin: 0.5rem 0 1.4rem 0; color: ESPRESSO; letter-spacing: -0.03em;}
+.ok {color: VERDE; font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 700;}
+.mal {color: ROJO; font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 700;}
 .escena {background: ARENA; border-radius: 22px; padding: 1.6rem 1.7rem; margin: 1rem 0 1.6rem 0; line-height: 1.75; font-size: 1.08rem;}
 .personas {font-size: 2.1rem; letter-spacing: 0.2rem; line-height: 1.4;}
-.puntaje {font-family: 'Fraunces', serif; font-size: clamp(3.5rem, 12vw, 6rem); font-weight: 900; line-height: 1; color: ESPRESSO;}
-.seccion {font-family: 'Fraunces', serif; font-size: 1.9rem; font-weight: 700; margin: 2.4rem 0 0.6rem 0; color: ESPRESSO;}
+.puntaje {font-family: 'Space Grotesk', sans-serif; font-size: clamp(3.5rem, 12vw, 6rem); font-weight: 700; line-height: 1; color: ESPRESSO; letter-spacing: -0.04em;}
+.perfil {font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 700; margin: 0.6rem 0 0.3rem 0; letter-spacing: -0.03em;}
+.seccion {font-family: 'Space Grotesk', sans-serif; font-size: 1.9rem; font-weight: 700; margin: 2.6rem 0 0.6rem 0; color: ESPRESSO; letter-spacing: -0.03em;}
 .letra-chica {color: #7A6656; font-size: 0.9rem;}
+.notas {display: flex; gap: 1rem; flex-wrap: wrap; margin: 0.8rem 0;}
+.nota {background: white; border-radius: 16px; padding: 0.8rem 1.2rem; min-width: 160px;}
+.nota b {font-family: 'Space Grotesk', sans-serif; font-size: 2rem;}
+.frase {background: ESPRESSO; color: CREMA; border-radius: 22px; padding: 2rem 1.8rem; margin: 2.6rem 0 0 0;
+        font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.25rem, 3.4vw, 1.6rem); line-height: 1.35; font-weight: 500;}
+.frase span {color: CARAMELO;}
+.billete svg {width: 100%; max-width: 520px; height: auto; display: block; margin: 0.8rem auto 1.2rem auto;}
+.boton-wa {display: flex; align-items: center; justify-content: center; gap: 0.7rem; background: WHATSAPP; color: white !important;
+           text-decoration: none !important; border-radius: 999px; min-height: 3.6rem; font-weight: 700; font-size: 1.1rem;}
+.boton-wa:hover {filter: brightness(0.95);}
+.boton-wa img {width: 1.7rem; height: 1.7rem; filter: invert(1);}
 
 /* --- Formularios sin "cajita" --- */
 [data-testid="stForm"] {border: none !important; padding: 0 !important;}
@@ -76,36 +104,34 @@ div[role="radiogroup"] label {background: white; border: 1.5px solid ARENA; bord
 div[role="radiogroup"] label:hover {border-color: CARAMELO;}
 div[role="radiogroup"] label:has(input:checked) {border-color: CARAMELO; background: #FBF4EC; box-shadow: 0 0 0 2px CARAMELO inset;}
 div[role="radiogroup"] label p {font-size: 1.12rem !important; font-weight: 500;}
+div[role="radiogroup"][aria-orientation="horizontal"] label {width: auto;}
 
 /* --- Botones --- */
-div.stButton > button, div.stFormSubmitButton > button, a[data-testid^="stBaseLinkButton"] {
-    border-radius: 999px; font-weight: 700; min-height: 3.3rem; font-size: 1.05rem;}
-div.stButton > button[kind="primary"], div.stFormSubmitButton > button[kind="primaryFormSubmit"], a[data-testid="stBaseLinkButton-primary"] {
+div.stButton > button, div.stFormSubmitButton > button {border-radius: 999px; font-weight: 700; min-height: 3.3rem; font-size: 1.05rem;}
+div.stButton > button[kind="primary"], div.stFormSubmitButton > button[kind="primaryFormSubmit"] {
     background: CARAMELO !important; color: ESPRESSO !important; border: none !important;}
 div.stButton > button[kind="secondary"] {background: transparent; border: 1.5px solid CHOCOLATE; color: CHOCOLATE;}
-.st-key-boton_gigante {margin-top: -5.5rem; position: relative; z-index: 2; max-width: 560px;}
-.st-key-boton_gigante button {min-height: 4.4rem !important;}
-.st-key-boton_gigante button p {font-size: 1.35rem !important; font-weight: 900 !important; letter-spacing: 0.08em;}
 [data-testid="stProgress"] > div > div > div > div {background: CARAMELO !important;}
+[data-testid="stMetricValue"] {font-family: 'Space Grotesk', sans-serif; font-weight: 700;}
 </style>
 """
 for nombre, valor in {"ESPRESSO": ESPRESSO, "CHOCOLATE": CHOCOLATE, "CARAMELO": CARAMELO, "CREMA": CREMA,
-                      "ARENA": ARENA, "VERDE": VERDE, "ROJO": ROJO}.items():
+                      "ARENA": ARENA, "VERDE": VERDE, "ROJO": ROJO, "WHATSAPP": WHATSAPP}.items():
     CSS = CSS.replace(nombre, valor)
 st.markdown(CSS, unsafe_allow_html=True)
 
 
-# Ilustración de la portada: una bola de monedas que crece cuesta abajo (el interés compuesto)
+# Ilustración de la portada: monedas que crecen cuesta abajo (la bola de nieve del interés compuesto)
 def moneda(cx, cy, r):
     return (f"<circle cx='{cx}' cy='{cy}' r='{r}' fill='{CARAMELO}'/>"
             f"<circle cx='{cx}' cy='{cy}' r='{r * 0.78:.1f}' fill='none' stroke='{ESPRESSO}' stroke-opacity='0.35' stroke-width='{max(r * 0.07, 1):.1f}'/>"
-            f"<text x='{cx}' y='{cy + r * 0.36:.1f}' text-anchor='middle' font-family='Fraunces, serif' font-weight='900' "
+            f"<text x='{cx}' y='{cy + r * 0.36:.1f}' text-anchor='middle' font-family='Space Grotesk, sans-serif' font-weight='700' "
             f"font-size='{r * 1.05:.1f}' fill='{ESPRESSO}' fill-opacity='0.55'>$</text>")
 
 
 MONEDAS = [(40, 52, 7), (110, 78, 10), (200, 112, 15), (315, 156, 22), (465, 214, 34)]
 ILUSTRACION = (
-    "<svg viewBox='0 0 560 270' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Una bola de monedas que crece cuesta abajo'>"
+    "<svg viewBox='0 0 560 270' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Monedas que crecen cuesta abajo'>"
     f"<path d='M0 40 L560 255' stroke='{CREMA}' stroke-opacity='0.25' stroke-width='2' stroke-dasharray='2 8'/>"
     + "".join(f"<path d='M{cx - r - 34} {cy - 6 - r * 0.2} h22' stroke='{CREMA}' stroke-opacity='0.2' stroke-width='2' stroke-linecap='round'/>"
               for cx, cy, r in MONEDAS[1:])
@@ -113,43 +139,61 @@ ILUSTRACION = (
     + "</svg>"
 )
 
+# Billete de 1 dólar (ilustración propia, estilizada) para la calculadora de inversión
+BILLETE = f"""<svg viewBox='0 0 520 230' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Billete de un dólar'>
+<rect x='4' y='4' width='512' height='222' rx='14' fill='#DCE5CF' stroke='#5E7A4E' stroke-width='3'/>
+<rect x='18' y='18' width='484' height='194' rx='8' fill='none' stroke='#5E7A4E' stroke-width='1.5' stroke-dasharray='5 4'/>
+<circle cx='260' cy='115' r='62' fill='#C9D6B8' stroke='#5E7A4E' stroke-width='2'/>
+<text x='260' y='145' text-anchor='middle' font-family='Space Grotesk, sans-serif' font-weight='700' font-size='92' fill='#3F5A33'>$</text>
+<text x='48' y='72' font-family='Space Grotesk, sans-serif' font-weight='700' font-size='54' fill='#3F5A33'>1</text>
+<text x='472' y='72' text-anchor='end' font-family='Space Grotesk, sans-serif' font-weight='700' font-size='54' fill='#3F5A33'>1</text>
+<text x='48' y='192' font-family='Space Grotesk, sans-serif' font-weight='700' font-size='54' fill='#3F5A33'>1</text>
+<text x='472' y='192' text-anchor='end' font-family='Space Grotesk, sans-serif' font-weight='700' font-size='54' fill='#3F5A33'>1</text>
+<text x='260' y='40' text-anchor='middle' font-family='Inter, sans-serif' font-weight='600' font-size='14' letter-spacing='4' fill='#3F5A33'>UN DÓLAR</text>
+<text x='260' y='205' text-anchor='middle' font-family='Inter, sans-serif' font-weight='600' font-size='13' letter-spacing='3' fill='#3F5A33'>EL PRIMERO DE TU BOLA DE NIEVE</text>
+</svg>"""
+
 # -------------------------------------------------------------
 # 2. DATOS REALES — verificar en las fuentes antes de lanzar
 # -------------------------------------------------------------
 DATOS_REALES = {
-    "bono":      {"valor": 5.0,  "fuente": "Bono del Tesoro de EE.UU. a 10 años, octubre 2026"},
     "en_blanco": {"valor": 5.0,  "fuente": "Cálculo con datos del INDEC, 2do trimestre 2026"},
     "impuestos": {"valor": 56.0, "fuente": "Unión Industrial Argentina (UIA), julio 2026"},
 }
 # Error a partir del cual la pregunta numérica suma 0 puntos
-ERROR_MAXIMO = {"bono": 10, "en_blanco": 5, "impuestos": 40}
+ERROR_MAXIMO = {"en_blanco": 5, "impuestos": 40}
 
 # -------------------------------------------------------------
-# 3. LAS PREGUNTAS — "escena" es lo que aprende la persona después de responder
+# 3. LAS PREGUNTAS — area "fin" (tu dinero) o "eco" (el país); "escena" = lo que aprende después de responder
 # -------------------------------------------------------------
 PREGUNTAS = [
-    {"id": "interes_compuesto", "bloque": "Tu dinero", "tipo": "opcion",
-     "texto": "Ponés $100 y cada año te pagan un 10% de lo que tenés. El primer año ganás $10. ¿Y el segundo año?",
-     "opciones": ["Gano $10 de nuevo", "Gano un poco más que $10", "Gano menos que $10", "No sé"],
-     "correcta": "Gano un poco más que $10",
+    # ---------- 💰 TU DINERO ----------
+    {"id": "interes_compuesto", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
+     "texto": "Ponés USD 1.000 en una inversión que rinde 10% por año y no retirás nada. El primer año ganás USD 100. ¿Y el segundo año?",
+     "opciones": ["Gano USD 100 de nuevo", "Gano un poco más que USD 100", "Gano menos que USD 100"],
+     "correcta": "Gano un poco más que USD 100",
      "escena": """<b>El secreto: cada año ganás intereses sobre los intereses que ya ganaste.</b><br><br>
-⚪ <b>Año 1:</b> ganás $10 → tenés $110<br>
-⚪ <b>Año 2:</b> ganás $11 → tenés $121<br>
-⚪ <b>Año 3:</b> ganás $12 → tenés $133<br><br>
+⚪ <b>Año 1:</b> ganás USD 100 → tenés USD 1.100<br>
+⚪ <b>Año 2:</b> ganás USD 110 → tenés USD 1.210<br>
+⚪ <b>Año 3:</b> ganás USD 121 → tenés USD 1.331<br><br>
 Tu dinero genera dinero solo, como una bola de nieve que rueda cuesta abajo y cada vuelta junta más nieve. ⛄<br><br>
-📈 A los 10 años: <b>$259</b> (no $200). 🚀 A los 30 años: <b>$1.745</b>.<br><br>
+📈 A los 10 años: <b>USD 2.594</b> (no 2.000). 🚀 A los 30 años: <b>USD 17.449</b>.<br><br>
 <b>Lo que importa no es cuánto ponés, sino cuánto tiempo dejás rodar la bola.</b>"""},
 
-    {"id": "bono", "bloque": "Tu dinero", "tipo": "numero", "max": 30, "paso": 0.5, "prefijo": "", "sufijo": "%",
-     "texto": "La inversión considerada la más segura del mundo es el bono del Tesoro de EE.UU. ¿Cuánto creés que paga por año, en dólares?",
-     "escena": """📏 <b>Esta es "la vara":</b> lo que podés ganar en dólares <b>casi sin riesgo y sin hacer nada.</b><br><br>
+    {"id": "la_vara", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
+     "texto": "¿Cuál de estas inversiones se considera la más segura del mundo?",
+     "opciones": ["Oro", "Dólares en el colchón", "Bonos del Tesoro de EE.UU.", "Bitcoin"],
+     "correcta": "Bonos del Tesoro de EE.UU.",
+     "escena": """🇺🇸 Se considera que el gobierno de EE.UU. es el deudor con menos chances de no pagar.<br><br>
+📏 <b>Paga alrededor de 5% por año en dólares, casi sin riesgo y sin hacer nada.</b> Eso es <b>"la vara"</b>:
+cualquier inversión o negocio tiene que ganarle.<br><br>
 Guardate este número, que lo vas a necesitar en la próxima pregunta. 😉"""},
 
-    {"id": "franquicia", "bloque": "Tu dinero", "tipo": "opcion",
+    {"id": "franquicia", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
      "texto": "Un amigo te ofrece entrar en su franquicia: por cada USD 100 que ponés, ganás USD 4 por año. ¿Es buen negocio?",
      "opciones": ["Sí, gano dinero todos los años",
                   "No: rinde menos que una inversión sin riesgo, y encima yo pongo el riesgo",
-                  "Depende de dónde esté el local", "No sé"],
+                  "Depende de dónde esté el local"],
      "correcta": "No: rinde menos que una inversión sin riesgo, y encima yo pongo el riesgo",
      "escena": """📏 <b>La vara: 5% en dólares, sin riesgo y sin hacer nada.</b> Cualquier negocio tiene que ganarle, y <b>por bastante</b>: vos ponés riesgo, tiempo y laburo.<br><br>
 🍔 <b>Franquicia al 4%:</b> arriesgás tu dinero para ganar <i>menos</i> que alguien que no hizo nada.<br>
@@ -158,7 +202,18 @@ Guardate este número, que lo vas a necesitar en la próxima pregunta. 😉"""},
 Esto se llama <b>costo de oportunidad</b>: lo que dejás de ganar por elegir una opción y no otra.<br><br>
 🧮 <b>¿Y cómo lo mido?</b> Ganancia de un año ÷ dinero que pusiste. Ganás $4 por cada $100 → <b>4%</b>."""},
 
-    {"id": "en_blanco", "bloque": "El país", "tipo": "numero", "max": 10, "paso": 1.0, "prefijo": "", "sufijo": " de 10",
+    {"id": "tasa_real", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
+     "texto": "Ponés $100 en algo que rinde 40% en el año, pero la inflación de ese año es 50%. ¿Qué pasó?",
+     "opciones": ["Gané, porque ahora tengo $140", "Perdí poder de compra, aunque tenga más pesos", "Quedé igual"],
+     "correcta": "Perdí poder de compra, aunque tenga más pesos",
+     "escena": """🛒 Tus $100 se hicieron <b>$140</b>. ¡Bien! 🎉<br>
+Pero el changuito que antes costaba $100, ahora cuesta <b>$150</b>. 😬<br>
+Con tus $140 no te alcanza: <b>te faltan $10</b>.<br><br>
+<b>Tenés más billetes, pero podés comprar menos.</b> Lo que importa no es cuánto rinde tu dinero,
+sino si rinde <b>más que la inflación</b>. Eso se llama <b>tasa real</b>."""},
+
+    # ---------- 🇦🇷 EL PAÍS ----------
+    {"id": "en_blanco", "area": "eco", "bloque": "El país", "tipo": "numero", "max": 10, "paso": 1.0, "prefijo": "", "sufijo": " de 10",
      "texto": "De cada 10 personas que trabajan o buscan trabajo en Argentina, ¿cuántas tienen un trabajo en blanco (con aportes y obra social)?",
      "escena": """🔥 <b>Imaginate un asado con 10 personas que trabajan o buscan laburo:</b><br>
 <div class='personas'>🧑‍💼🧑‍💼🧑‍💼🧑‍💼🧑‍💼</div><b>5 tienen recibo de sueldo</b><br>
@@ -166,17 +221,52 @@ Esto se llama <b>costo de oportunidad</b>: lo que dejás de ganar por elegir una
 <div class='personas'>🔍</div><b>1 está buscando trabajo</b><br><br>
 🤔 Solo 5 de cada 10 aportan… <b>¿Los números cierran?</b> Guardate esta pregunta: la retomamos al final. 😉"""},
 
-    {"id": "impuestos", "bloque": "El país", "tipo": "numero", "max": 100, "paso": 1.0, "prefijo": "$", "sufijo": "",
+    {"id": "impuestos", "area": "eco", "bloque": "El país", "tipo": "numero", "max": 100, "paso": 1.0, "prefijo": "$", "sufijo": "",
      "texto": "Una empresa en blanco en Argentina, de cada $100 que gana, ¿cuántos se le van en impuestos?",
      "escena": """🥇 <b>Argentina sale 1ª de 30 países</b> en impuestos sobre las empresas en blanco. Un campeonato que nadie quiere ganar.<br><br>
 🤔 <b>Pero en presión fiscal total, somos 12º.</b> ¿Cómo puede ser? Acordate del asado: solo 5 de cada 10 trabajan en blanco.<br>
 <b>Pagan pocos, y los que pagan, pagan por todos.</b>"""},
+
+    {"id": "banco_central", "area": "eco", "bloque": "El país", "tipo": "opcion",
+     "texto": "El Banco Central sube fuerte la tasa de interés. ¿Qué busca lograr?",
+     "opciones": ["Que sea más barato endeudarse y se consuma más",
+                  "Encarecer el crédito para frenar el consumo y la inflación", "Que suban los sueldos"],
+     "correcta": "Encarecer el crédito para frenar el consumo y la inflación",
+     "escena": """🏦 La tasa de interés es el <b>"precio" del dinero</b>. Cuando el Banco Central la sube:<br><br>
+💳 Pedir un préstamo o comprar en cuotas sale <b>más caro</b> → la gente compra menos.<br>
+🐷 Ahorrar en pesos <b>rinde más</b> → la gente guarda en vez de gastar.<br><br>
+Menos gente gastando = <b>los precios suben más despacio</b>. Es como pisar el freno del auto 🚗:
+frena la inflación… pero también frena la economía."""},
+
+    {"id": "emision", "area": "eco", "bloque": "El país", "tipo": "opcion",
+     "texto": "Un país imprime muchos más billetes, pero produce la misma cantidad de cosas. ¿Qué pasa?",
+     "opciones": ["Hay más riqueza para todos", "Suben los precios", "No pasa nada, el dinero es solo papel"],
+     "correcta": "Suben los precios",
+     "escena": """🍕 Imaginá <b>una pizza de 8 porciones</b>, y cada porción se canjea con un ticket.<br>
+Si de golpe se imprimen el doble de tickets, pero la pizza sigue siendo una sola…<br>
+<b>cada ticket alcanza para media porción.</b> 🤏<br><br>
+Con el dinero pasa lo mismo: si hay el doble de billetes pero las mismas cosas para comprar,
+<b>cada billete compra menos</b>. Eso es la inflación."""},
 ]
 
-# Niveles del termómetro final
-NIVELES = [(0, 25, "🌱 Recién arrancás"), (25, 50, "📖 En camino"), (50, 75, "🎯 Bien informado"), (75, 101, "🏆 Crack")]
+# Los 4 perfiles (nombres provisorios): (nivel en "El país", nivel en "Tu dinero")
+PERFILES = {
+    ("alto", "alto"): {"nombre": "La Calculadora", "emoji": "🧮",
+                       "texto": "Entendés cómo funciona el país y lo aplicás a tu dinero. Sos de los pocos que no se dejan llevar por lo que \"se dice\"."},
+    ("alto", "bajo"): {"nombre": "El Opinólogo", "emoji": "🎙️",
+                       "texto": "Tenés bastante claro cómo funciona la economía del país, pero a la hora de manejar tu dinero, te falta calle."},
+    ("bajo", "alto"): {"nombre": "El Ahorrista Intuitivo", "emoji": "🐷",
+                       "texto": "Con tu dinero sos vivo/a, aunque la economía del país te queda un poco lejos. Si te informás un poco más, sos imparable."},
+    ("bajo", "bajo"): {"nombre": "El Despistado", "emoji": "🤷",
+                       "texto": "Todavía te faltan datos clave del país y de tu dinero. Tranqui: es lo más común, y es lo más fácil de cambiar."},
+}
+
+PERCEPCION = ["Más de lo que pensaba", "Lo que pensaba", "Menos de lo que pensaba",
+              "Me di cuenta de que hay un montón de cosas que nunca me había preguntado"]
 
 SUGERENCIAS = ["¿Qué es un plazo fijo UVA?", "¿Cómo empiezo a invertir con poco?", "¿Por qué hay tanta inflación en Argentina?"]
+
+ICONO_WHATSAPP = "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/whatsapp.svg"
 
 # -------------------------------------------------------------
 # 4. FUNCIONES
@@ -195,8 +285,24 @@ def formato(numero):
     return texto[:-2] if texto.endswith(",0") else texto
 
 
+def miles(numero):
+    """163806.4 → '163.806'"""
+    return f"{numero:,.0f}".replace(",", ".")
+
+
 def con_unidad(p, valor):
     return f"{p['prefijo']}{formato(valor)}{p['sufijo']}"
+
+
+def opciones_mezcladas(p):
+    """Mezcla el orden de las opciones (una vez por persona) para que la correcta no caiga siempre en el mismo lugar.
+    'No sé' va siempre al final."""
+    clave = f"orden_{p['id']}"
+    if clave not in st.session_state:
+        orden = p["opciones"][:]
+        random.shuffle(orden)
+        st.session_state[clave] = orden + ["No sé"]
+    return st.session_state[clave]
 
 
 def puntaje_pregunta(p, respuesta):
@@ -212,8 +318,18 @@ def acerto(p, respuesta):
     return puntaje_pregunta(p, respuesta) >= 0.8
 
 
-def nivel(puntaje):
-    return next(nombre for desde, hasta, nombre in NIVELES if desde <= puntaje < hasta)
+def calcular_notas(resp):
+    """Nota de 'El país' (eco) y de 'Tu dinero' (fin), de 0 a 100."""
+    notas = {}
+    for area in ["eco", "fin"]:
+        preguntas = [p for p in PREGUNTAS if p["area"] == area]
+        notas[area] = round(100 * sum(puntaje_pregunta(p, resp[p["id"]]) for p in preguntas) / len(preguntas))
+    return notas
+
+
+def elegir_perfil(notas):
+    nivel = lambda n: "alto" if n >= 50 else "bajo"
+    return PERFILES[(nivel(notas["eco"]), nivel(notas["fin"]))]
 
 
 def layout_base(fig, alto):
@@ -230,59 +346,81 @@ def grafico_linea(p, respuesta, real):
     fig.add_shape(type="line", x0=min(respuesta, real), x1=max(respuesta, real), y0=0, y1=0, line=dict(color=ROJO, width=10))
     fig.add_trace(go.Scatter(x=[respuesta], y=[0], mode="markers+text", text=[f"Vos: {con_unidad(p, respuesta)}"],
                              textposition="top center", marker=dict(size=26, color=CARAMELO, line=dict(color="white", width=3)),
-                             textfont=dict(size=16, color=ESPRESSO), hoverinfo="skip"))
+                             textfont=dict(size=16, color=ESPRESSO), hoverinfo="skip", cliponaxis=False))
     fig.add_trace(go.Scatter(x=[real], y=[0], mode="markers+text", text=[f"Real: {con_unidad(p, real)}"],
                              textposition="bottom center", marker=dict(size=26, color=CHOCOLATE, line=dict(color="white", width=3)),
-                             textfont=dict(size=16, color=CHOCOLATE), hoverinfo="skip"))
+                             textfont=dict(size=16, color=CHOCOLATE), hoverinfo="skip", cliponaxis=False))
     fig.update_layout(showlegend=False, xaxis=dict(range=[-maximo * 0.08, maximo * 1.08], visible=False),
                       yaxis=dict(range=[-1.3, 1.3], visible=False))
     return layout_base(fig, 140)
 
 
 def grafico_bola_de_nieve():
-    """Interés compuesto vs. interés simple: $100 al 10% anual durante 30 años."""
+    """Interés compuesto vs. interés simple: USD 1.000 al 10% anual durante 30 años."""
     anios = list(range(0, 31))
     fig = go.Figure()
-    fig.add_scatter(x=anios, y=[100 + 10 * a for a in anios], name="Sin bola de nieve", line=dict(color="#B9A797", width=3, dash="dot"))
-    fig.add_scatter(x=anios, y=[100 * 1.1 ** a for a in anios], name="Con bola de nieve ⛄", line=dict(color=CARAMELO, width=5))
+    fig.add_scatter(x=anios, y=[1000 + 100 * a for a in anios], name="Sin bola de nieve", line=dict(color="#B9A797", width=3, dash="dot"))
+    fig.add_scatter(x=anios, y=[1000 * 1.1 ** a for a in anios], name="Con bola de nieve ⛄", line=dict(color=CARAMELO, width=5))
     fig.update_layout(legend=dict(orientation="h", y=1.15), xaxis=dict(title="Años", gridcolor=ARENA),
-                      yaxis=dict(title="$", gridcolor=ARENA))
+                      yaxis=dict(title="USD", gridcolor=ARENA))
     return layout_base(fig, 280)
 
 
-def grafico_termometro(puntaje):
-    """Termómetro de 0 a 100 con 4 zonas y tu punto."""
-    colores = ["#E9DCCB", "#DCC3A6", "#CFA77E", "#C08552"]
+def grafico_cuadrado(notas):
+    """El cuadrado tipo zodíaco: 'Tu dinero' (horizontal) × 'El país' (vertical), con tu punto."""
     fig = go.Figure()
-    for (desde, hasta, nombre), color in zip(NIVELES, colores):
-        fig.add_shape(type="rect", x0=desde, x1=min(hasta, 100), y0=-0.3, y1=0.3, fillcolor=color, line=dict(width=0), layer="below")
-        fig.add_annotation(x=(desde + min(hasta, 100)) / 2, y=-0.75, text=nombre.replace(" ", "<br>", 1), showarrow=False,
-                           font=dict(size=12, color=CHOCOLATE))
-    fig.add_trace(go.Scatter(x=[min(max(puntaje, 4), 96)], y=[0], mode="markers+text", text=["VOS"], cliponaxis=False, textposition="top center",
-                             marker=dict(size=34, color=ESPRESSO, line=dict(color="white", width=4)),
-                             textfont=dict(size=16, color=ESPRESSO, family="Fraunces"), hoverinfo="skip"))
-    fig.update_layout(showlegend=False, xaxis=dict(range=[-6, 106], visible=False), yaxis=dict(range=[-1.2, 1.4], visible=False))
-    return layout_base(fig, 200)
+    zonas = [(0, 50, 50, 100, "#EADCCB", ("alto", "bajo")), (50, 100, 50, 100, "#D9BC98", ("alto", "alto")),
+             (0, 50, 0, 50, "#F3EAE0", ("bajo", "bajo")), (50, 100, 0, 50, "#E4CCAE", ("bajo", "alto"))]
+    for x0, x1, y0, y1, color, clave in zonas:
+        fig.add_shape(type="rect", x0=x0, x1=x1, y0=y0, y1=y1, fillcolor=color, line=dict(width=0), layer="below")
+        perfil = PERFILES[clave]
+        fig.add_annotation(x=x0 + 3, y=y1 - 3, xanchor="left", yanchor="top", text=f"{perfil['emoji']} {perfil['nombre']}",
+                           showarrow=False, font=dict(size=12, color=CHOCOLATE))
+    fig.add_shape(type="line", x0=50, x1=50, y0=0, y1=100, line=dict(color="#B9A797", width=1))
+    fig.add_shape(type="line", x0=0, x1=100, y0=50, y1=50, line=dict(color="#B9A797", width=1))
+    x, y = min(max(notas["fin"], 4), 96), min(max(notas["eco"], 4), 90)
+    fig.add_trace(go.Scatter(x=[x], y=[y], mode="markers+text", text=["  VOS"], textposition="middle right",
+                             textfont=dict(size=16, color=ESPRESSO, family="Space Grotesk"), cliponaxis=False,
+                             marker=dict(size=26, color=ESPRESSO, line=dict(color="white", width=4)), hoverinfo="skip"))
+    fig.update_layout(showlegend=False,
+                      xaxis=dict(range=[0, 100], title="💰 Tu dinero →", showgrid=False, zeroline=False, tickvals=[0, 50, 100]),
+                      yaxis=dict(range=[0, 100], title="🇦🇷 El país →", showgrid=False, zeroline=False, tickvals=[0, 50, 100],
+                                 scaleanchor="x"))
+    return layout_base(fig, 440)
 
 
 def grafico_barras(resp):
     """Lo que creías vs. el dato real (llevado a la misma escala para comparar)."""
-    filas = [("Bono del Tesoro<br>(% anual)", resp["bono"], 5.0),
-             ("Trabajan en blanco<br>(de cada 100)", resp["en_blanco"] * 10, 50.0),
-             ("Impuestos<br>(de cada $100)", resp["impuestos"], 56.0)]
+    filas = [("Trabajan en blanco<br>(de cada 100)", resp["en_blanco"] * 10, 50.0),
+             ("Impuestos de una empresa<br>(de cada $100)", resp["impuestos"], 56.0)]
     fig = go.Figure()
     fig.add_bar(name="Lo que creías", y=[f[0] for f in filas], x=[f[1] for f in filas], orientation="h", marker_color=CARAMELO)
     fig.add_bar(name="Dato real", y=[f[0] for f in filas], x=[f[2] for f in filas], orientation="h", marker_color=CHOCOLATE)
-    fig.update_layout(barmode="group", legend=dict(orientation="h", y=1.18), yaxis=dict(autorange="reversed"),
-                      xaxis=dict(gridcolor=ARENA))
-    return layout_base(fig, 320)
+    fig.update_layout(barmode="group", legend=dict(orientation="h", y=1.2), yaxis=dict(autorange="reversed"),
+                      xaxis=dict(gridcolor=ARENA, range=[0, 100]))
+    return layout_base(fig, 260)
 
 
-def ahorro_a_futuro(por_mes, anios, tasa_anual=0.07):
-    """Cuánto juntás ahorrando 'por_mes' durante 'anios', con interés compuesto mensual."""
+def simular_ahorro(por_mes, anios, tasa_anual):
+    """Año por año: cuánto pusiste vos y cuánto generó el interés compuesto (aportes mensuales)."""
     r = tasa_anual / 12
-    meses = int(anios * 12)
-    return por_mes * ((1 + r) ** meses - 1) / r if meses > 0 else 0
+    saldo, filas = 0.0, []
+    for mes in range(1, int(anios * 12) + 1):
+        saldo = saldo * (1 + r) + por_mes
+        if mes % 12 == 0:
+            aportado = por_mes * mes
+            filas.append({"anio": mes // 12, "aportado": aportado, "intereses": saldo - aportado, "total": saldo})
+    return pd.DataFrame(filas)
+
+
+def grafico_crecimiento(tabla):
+    """Barras anuales apiladas: lo que pusiste vos + lo que puso la bola de nieve."""
+    fig = go.Figure()
+    fig.add_bar(x=tabla["anio"], y=tabla["aportado"], name="Lo que pusiste vos", marker_color=CHOCOLATE)
+    fig.add_bar(x=tabla["anio"], y=tabla["intereses"], name="Lo que puso la bola de nieve ⛄", marker_color=CARAMELO)
+    fig.update_layout(barmode="stack", bargap=0.15, legend=dict(orientation="h", y=1.15),
+                      xaxis=dict(title="Años", gridcolor=ARENA), yaxis=dict(title="USD", gridcolor=ARENA))
+    return layout_base(fig, 340)
 
 
 def guardar(fila, hoja_nombre="respuestas"):
@@ -326,9 +464,11 @@ def preguntar_a_claude(prompt, max_tokens=600):
     return None
 
 
-def devolucion(resp, puntaje, aciertos):
-    lineas = [f"Puntaje: {puntaje}/100 ({aciertos} de {len(PREGUNTAS)} aciertos). Nivel: {nivel(puntaje)}. Edad: {resp['edad']}.",
-              f"Qué hace con el dinero que le sobra: {resp['dinero_que_sobra']}. Ahorra para la jubilación: {resp['ahorro_jubilacion']}."]
+def devolucion(resp, notas, perfil, aciertos):
+    lineas = [f"Aciertos: {aciertos} de {len(PREGUNTAS)}. Nota El país: {notas['eco']}/100. Nota Tu dinero: {notas['fin']}/100. "
+              f"Perfil: {perfil['nombre']}. Edad: {resp['edad']}.",
+              f"Qué hace con el dinero que le sobra: {resp['dinero_que_sobra']}. Ahorra para la jubilación: {resp['ahorro_jubilacion']}. "
+              f"Después del test siente que sabe: {resp['percepcion']}."]
     for p in PREGUNTAS:
         r = resp[p["id"]]
         if p["tipo"] == "numero":
@@ -340,7 +480,7 @@ Una persona acaba de hacer un test de economía y finanzas personales. Resultado
 {chr(10).join(lineas)}
 
 Escribile una devolución personalizada en español rioplatense (voseo), de 120 a 170 palabras:
-1. Una primera frase con gancho sobre su resultado.
+1. Una primera frase con gancho sobre su perfil.
 2. Lo más importante que se le escapó y por qué le importa en su vida.
 3. Dos acciones concretas para esta semana, según lo que hoy hace con su dinero.
 4. Un cierre que la deje con ganas de informarse más.
@@ -349,15 +489,13 @@ No recomiendes productos, bancos ni empresas específicas. No opines de polític
     respuesta = preguntar_a_claude(prompt)
     if respuesta:
         return respuesta
-    if puntaje >= 75:
-        return "**Estás mejor informado/a que la mayoría.** Igual, repasá dónde fallaste: siempre hay algo más para aprender."
-    if puntaje >= 50:
-        return "**Vas bien, pero hay datos clave que se te escapan.** Repasá las explicaciones: en 2 minutos sabés más que la mayoría."
-    return "**Como a la mayoría, a vos también te faltan datos clave.** La buena noticia: se aprende rápido, y ya diste el primer paso."
+    flojo = "la economía del país" if notas["eco"] < notas["fin"] else "el manejo de tu dinero"
+    return (f"Donde más margen tenés para mejorar es en **{flojo}**. Repasá las explicaciones de cada pregunta: "
+            "en 2 minutos sabés más que la mayoría.")
 
 
-def responder_consulta(texto, edad, puntaje):
-    guardar({"fecha": datetime.now().isoformat(timespec="seconds"), "edad": edad, "puntaje": puntaje,
+def responder_consulta(texto, edad, aciertos):
+    guardar({"fecha": datetime.now().isoformat(timespec="seconds"), "edad": edad, "aciertos": aciertos,
              "pregunta": texto}, hoja_nombre="preguntas")
     with st.spinner("Pensando..."):
         respuesta = preguntar_a_claude(
@@ -372,8 +510,10 @@ Pregunta: {texto}""", max_tokens=400)
 # -------------------------------------------------------------
 # 5. PANTALLAS
 # -------------------------------------------------------------
+TOTAL_PANTALLAS = len(PREGUNTAS) + 2   # + jubilación + percepción
+
 if "paso" not in st.session_state:
-    st.session_state.paso = "inicio"     # inicio → sobre_vos → preguntas → jubilacion → resultado
+    st.session_state.paso = "inicio"     # inicio → sobre_vos → preguntas → jubilacion → percepcion → resultado
     st.session_state.resp = {}
     st.session_state.i = 0
     st.session_state.revelar = False
@@ -386,20 +526,38 @@ def ir_a(paso):
     st.rerun()
 
 
+def pregunta_simple(numero, etiqueta, texto, opciones, clave, siguiente, boton):
+    """Pantalla de una pregunta sin puntaje (jubilación y percepción)."""
+    st.progress(numero / TOTAL_PANTALLAS, text=f"Pregunta {numero} de {TOTAL_PANTALLAS}")
+    st.markdown(f"<div class='etiqueta'>{etiqueta}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='pregunta'>{texto}</div>", unsafe_allow_html=True)
+    with st.form(clave):
+        valor = st.radio("Respuesta", opciones, index=None, label_visibility="collapsed")
+        st.write("")
+        if st.form_submit_button(boton, type="primary", use_container_width=True):
+            if valor is None:
+                st.error("Respondé para seguir.")
+            else:
+                st.session_state.resp[clave] = valor
+                ir_a(siguiente)
+
+
 # ---------- INICIO ----------
 if st.session_state.paso == "inicio":
-    st.markdown(f"""<div class='hero'><div class='hero-in'>
-        <div class='kicker'>Test de economía</div>
-        <h1>¿Te animás a descubrir cuánto sabés realmente de economía?</h1>
-        <p>Todos opinamos de economía. Todos creemos que manejamos bien nuestro dinero.</p>
-        <p class='oro'>En 4 minutos vas a saber si es cierto.</p>
-        <div class='chips'><span class='chip'>⏱ 4 minutos</span><span class='chip'>🔒 Anónimo</span><span class='chip'>🚫 Sin Google</span></div>
-        {ILUSTRACION}
-        <div style='height:5rem'></div>
+    st.markdown(f"""<div class='hero-arriba'><div class='hero-grilla'>
+        <div class='hero-texto'>
+          <div class='kicker'>Test de economía</div>
+          <h1>¿Te animás a descubrir cuánto sabés realmente de economía?</h1>
+          <p>Todos opinamos de economía. Todos creemos que manejamos bien nuestro dinero.</p>
+          <p class='oro'>En 4 minutos vas a saber si es cierto.</p>
+          <div class='chips'><span class='chip'>⏱ 4 minutos</span><span class='chip'>🔒 Anónimo</span><span class='chip'>🚫 Sin Google</span></div>
+        </div>
+        <div class='ilus ilus-compu'>{ILUSTRACION}</div>
         </div></div>""", unsafe_allow_html=True)
     with st.container(key="boton_gigante"):
         if st.button("EMPEZAR EL TEST →", type="primary", use_container_width=True):
             ir_a("sobre_vos")
+    st.markdown(f"<div class='hero-abajo'><div class='ilus ilus-celu'>{ILUSTRACION}</div></div>", unsafe_allow_html=True)
 
 # ---------- SOBRE VOS ----------
 elif st.session_state.paso == "sobre_vos":
@@ -429,8 +587,7 @@ elif st.session_state.paso == "sobre_vos":
 elif st.session_state.paso == "preguntas":
     i = st.session_state.i
     p = PREGUNTAS[i]
-    total = len(PREGUNTAS) + 1
-    st.progress((i + 1) / total, text=f"Pregunta {i + 1} de {total}")
+    st.progress((i + 1) / TOTAL_PANTALLAS, text=f"Pregunta {i + 1} de {TOTAL_PANTALLAS}")
     st.markdown(f"<div class='etiqueta'>{p['bloque']}</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='pregunta'>{p['texto']}</div>", unsafe_allow_html=True)
 
@@ -442,7 +599,7 @@ elif st.session_state.paso == "preguntas":
                 valor = st.number_input(f"Tu respuesta ({unidad})", min_value=0.0, max_value=float(p["max"]), value=None,
                                         step=p["paso"], format="%g", placeholder="Escribí un número")
             else:
-                valor = st.radio("Respuesta", p["opciones"], index=None, label_visibility="collapsed")
+                valor = st.radio("Respuesta", opciones_mezcladas(p), index=None, label_visibility="collapsed")
             st.write("")
             if st.form_submit_button("Responder", type="primary", use_container_width=True):
                 if valor is None:
@@ -477,43 +634,42 @@ elif st.session_state.paso == "preguntas":
             st.session_state.i += 1
             st.rerun()
 
-# ---------- ÚLTIMA PREGUNTA ----------
+# ---------- SIN PUNTAJE: JUBILACIÓN Y PERCEPCIÓN ----------
 elif st.session_state.paso == "jubilacion":
-    total = len(PREGUNTAS) + 1
-    st.progress(1.0, text=f"Pregunta {total} de {total}")
-    st.markdown("<div class='etiqueta'>Última</div>", unsafe_allow_html=True)
-    st.markdown("<div class='pregunta'>¿Estás ahorrando por tu cuenta para cuando te jubiles?</div>", unsafe_allow_html=True)
-    with st.form("jubilacion"):
-        valor = st.radio("Respuesta", ["Sí", "Todavía no, pero quiero", "No lo había pensado"], index=None,
-                         label_visibility="collapsed")
-        st.write("")
-        if st.form_submit_button("Ver mi resultado →", type="primary", use_container_width=True):
-            if valor is None:
-                st.error("Respondé para seguir.")
-            else:
-                st.session_state.resp["ahorro_jubilacion"] = valor
-                ir_a("resultado")
+    pregunta_simple(len(PREGUNTAS) + 1, "Casi terminamos", "¿Estás ahorrando por tu cuenta para cuando te jubiles?",
+                    ["Sí", "Todavía no, pero quiero", "No lo había pensado"], "ahorro_jubilacion", "percepcion", "Seguir →")
+
+elif st.session_state.paso == "percepcion":
+    pregunta_simple(TOTAL_PANTALLAS, "Última", "Después de hacer este test, ¿cuánto sentís que sabés realmente de economía y finanzas?",
+                    PERCEPCION, "percepcion", "resultado", "Ver mi resultado →")
 
 # ---------- RESULTADO ----------
 elif st.session_state.paso == "resultado":
     resp = st.session_state.resp
+    notas = calcular_notas(resp)
+    perfil = elegir_perfil(notas)
     aciertos = sum(acerto(p, resp[p["id"]]) for p in PREGUNTAS)
-    # El puntaje (0 a 100) sale de los aciertos, así el termómetro y el "X de 5" siempre coinciden
-    puntaje = round(100 * aciertos / len(PREGUNTAS))
 
     if not st.session_state.guardado:
-        guardar({"fecha": datetime.now().isoformat(timespec="seconds"), **resp, "puntaje": puntaje, "aciertos": aciertos})
+        guardar({"fecha": datetime.now().isoformat(timespec="seconds"), **resp, "aciertos": aciertos,
+                 "nota_pais": notas["eco"], "nota_dinero": notas["fin"], "perfil": perfil["nombre"]})
         st.session_state.guardado = True
 
     st.markdown("<div class='etiqueta'>Tu resultado</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='puntaje'>{aciertos} de {len(PREGUNTAS)}</div>", unsafe_allow_html=True)
     st.markdown("<div class='letra-chica'>respuestas acertadas</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='pregunta' style='margin-top:0.4rem'>{nivel(puntaje)}</div>", unsafe_allow_html=True)
-    st.plotly_chart(grafico_termometro(puntaje), use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
+    st.markdown(f"<div class='perfil'>{perfil['emoji']} Sos {perfil['nombre']}</div>", unsafe_allow_html=True)
+    st.markdown(perfil["texto"])
+    st.markdown(f"""<div class='notas'>
+        <div class='nota'>🇦🇷 El país<br><b>{notas['eco']}</b>/100</div>
+        <div class='nota'>💰 Tu dinero<br><b>{notas['fin']}</b>/100</div></div>""", unsafe_allow_html=True)
+
+    st.markdown("<div class='seccion'>Dónde estás parado/a</div>", unsafe_allow_html=True)
+    st.plotly_chart(grafico_cuadrado(notas), use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
 
     if "devolucion" not in st.session_state:
         with st.spinner("Analizando tus respuestas..."):
-            st.session_state.devolucion = devolucion(resp, puntaje, aciertos)
+            st.session_state.devolucion = devolucion(resp, notas, perfil, aciertos)
     st.markdown("<div class='seccion'>Tu devolución</div>", unsafe_allow_html=True)
     with st.container(border=True):
         st.markdown(st.session_state.devolucion)
@@ -521,7 +677,7 @@ elif st.session_state.paso == "resultado":
     st.markdown("<div class='seccion'>Lo que creías vs. la realidad</div>", unsafe_allow_html=True)
     st.plotly_chart(grafico_barras(resp), use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
 
-    # ----- Cierre: los números no cierran + calculadora de jubilación -----
+    # ----- Cierre: los números no cierran + calculadora de inversión -----
     edad = resp["edad"]
     st.markdown("<div class='seccion'>🔥 ¿Te acordás del asado?</div>", unsafe_allow_html=True)
     st.markdown("Solo 5 de cada 10 aportan. Y además, cada vez hay menos trabajadores por cada jubilado. "
@@ -532,24 +688,37 @@ elif st.session_state.paso == "resultado":
         st.markdown("⛄ **Nunca es tarde, pero cada año cuenta.** La bola de nieve necesita tiempo para crecer.")
     else:
         st.markdown("⛄ **Es momento de ordenar y proteger lo que ahorraste,** y de que cada peso que sumes trabaje para vos.")
-    anios = max(65 - edad, 0)
-    if anios >= 5:
-        por_mes = st.select_slider("🎚️ ¿Cuánto podrías ahorrar por mes? (en dólares)",
-                                   options=[10, 20, 30, 50, 75, 100, 150, 200], value=50)
-        c1, c2 = st.columns(2)
-        c1.metric("Si empezás hoy", f"USD {ahorro_a_futuro(por_mes, anios):,.0f}".replace(",", "."))
-        c2.metric("Si esperás 10 años", f"USD {ahorro_a_futuro(por_mes, max(anios - 10, 0)):,.0f}".replace(",", "."))
-        st.markdown(f"<div class='letra-chica'>Ahorrando USD {por_mes} por mes hasta los 65, con un rendimiento supuesto "
-                    "de 7% anual en dólares.</div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='seccion'>🧮 Calculadora de inversión</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='billete'>{BILLETE}</div>", unsafe_allow_html=True)
+    anios = max(65 - edad, 10)   # hasta los 65; si falta poco, mostramos 10 años
+    c1, c2 = st.columns(2)
+    por_mes = c1.select_slider("💵 ¿Cuánto podrías ahorrar por mes? (USD)", options=[10, 20, 30, 50, 75, 100, 150, 200], value=50)
+    tasa = c2.select_slider("📈 ¿A qué tasa anual en dólares?", options=[3, 5, 7], value=5, format_func=lambda t: f"{t}%")
+    st.markdown("<div class='letra-chica'>5% ≈ la vara (bono del Tesoro de EE.UU.) · 7% ≈ lo que rindió históricamente "
+                "la bolsa de EE.UU. después de la inflación, con más riesgo.</div>", unsafe_allow_html=True)
+    tabla = simular_ahorro(por_mes, anios, tasa / 100)
+    final = tabla.iloc[-1]
+    m1, m2 = st.columns(2)
+    m1.metric(f"En {anios} años tendrías", f"USD {miles(final['total'])}")
+    if anios >= 20:
+        m2.metric("Si esperás 10 años para empezar", f"USD {miles(simular_ahorro(por_mes, anios - 10, tasa / 100).iloc[-1]['total'])}")
+    st.markdown(f"Vos pusiste **USD {miles(final['aportado'])}**. La bola de nieve puso **USD {miles(final['intereses'])}**. ⛄")
+    st.plotly_chart(grafico_crecimiento(tabla), use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
     st.markdown("💡 **No hace falta mucho:** empezar con el 5 o 10% de tu sueldo ya hace la diferencia. "
                 "Informate, preguntale a alguien que sepa, investigá. **Lo importante es arrancar.**")
 
-    # ----- Compartir -----
+    st.markdown("<div class='frase'>No necesitás estudiar Economía para que la economía importe en tu vida. "
+                "<span>Pero sí necesitás entenderla para que tus decisiones no dependan de la suerte.</span></div>",
+                unsafe_allow_html=True)
+
+    # ----- Compartir por WhatsApp -----
     st.markdown("<div class='seccion'>¿Te animás a desafiar a alguien?</div>", unsafe_allow_html=True)
-    mensaje = (f"Hice el test \"{NOMBRE_APP}\" y acerté {aciertos} de {len(PREGUNTAS)} ({nivel(puntaje)}). "
-               f"¿A que no me ganás? {secreto('APP_URL') or ''}")
-    st.link_button("📲 Desafiá a alguien por WhatsApp", "https://wa.me/?text=" + urllib.parse.quote(mensaje),
-                   type="primary", use_container_width=True)
+    mensaje = (f"Hice el test \"{NOMBRE_APP}\": acerté {aciertos} de {len(PREGUNTAS)} y me salió "
+               f"{perfil['emoji']} *{perfil['nombre']}*. ¿A que no me ganás? {secreto('APP_URL') or ''}")
+    enlace = "https://wa.me/?text=" + urllib.parse.quote(mensaje)
+    st.markdown(f"<a class='boton-wa' href='{enlace}' target='_blank'><img src='{ICONO_WHATSAPP}' alt=''>"
+                "Desafiá a alguien por WhatsApp</a>", unsafe_allow_html=True)
 
     # ----- Dejá tu pregunta -----
     st.markdown("<div class='seccion'>💬 ¿Te quedaste con dudas? ¡Esa es la idea!</div>", unsafe_allow_html=True)
@@ -562,13 +731,13 @@ elif st.session_state.paso == "resultado":
         st.markdown("<div class='letra-chica'>Tocá una idea o escribí la tuya:</div>", unsafe_allow_html=True)
         for k, sugerencia in enumerate(SUGERENCIAS):
             if st.button(sugerencia, key=f"sug_{k}", use_container_width=True):
-                responder_consulta(sugerencia, edad, puntaje)
+                responder_consulta(sugerencia, edad, aciertos)
                 st.rerun()
         with st.form("consulta", clear_on_submit=True):
             consulta = st.text_area("Tu pregunta", placeholder="Escribí tu pregunta acá...", max_chars=300,
                                     label_visibility="collapsed")
             if st.form_submit_button("Preguntar", type="primary", use_container_width=True) and consulta.strip():
-                responder_consulta(consulta.strip(), edad, puntaje)
+                responder_consulta(consulta.strip(), edad, aciertos)
                 st.rerun()
     else:
         st.info("Llegaste al máximo de 3 preguntas. ¡Gracias por participar!")
