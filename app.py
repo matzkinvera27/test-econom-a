@@ -1,5 +1,5 @@
 # =============================================================
-#  AL DATO  (nombre provisorio)
+#  ECONOMÍA EN 4 MINUTOS
 #  Test interactivo: ¿cuánto sabés realmente de economía?
 #  TP Programación para Economistas — Vera Matzkin
 # =============================================================
@@ -20,7 +20,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-NOMBRE_APP = "Al Dato"   # ← cambiar acá el nombre cuando lo elijas
+NOMBRE_APP = "Economía en 4 Minutos"   # ← cambiar acá el nombre
 
 # -------------------------------------------------------------
 # 1. CONFIGURACIÓN Y DISEÑO — paleta "chocolate y crema"
@@ -80,6 +80,9 @@ p, li, label, .stMarkdown {font-size: 1.08rem;}
 .perfil {font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 700; margin: 0.6rem 0 0.3rem 0; letter-spacing: -0.03em;}
 .seccion {font-family: 'Space Grotesk', sans-serif; font-size: 1.9rem; font-weight: 700; margin: 2.6rem 0 0.6rem 0; color: ESPRESSO; letter-spacing: -0.03em;}
 .letra-chica {color: #7A6656; font-size: 0.9rem;}
+.titulo-preg {display: inline-block; background: ARENA; color: CHOCOLATE; border-radius: 999px; padding: 0.3rem 0.9rem; font-weight: 600; font-size: 0.98rem; margin-top: 0.6rem;}
+.destacado {font-size: 1.28rem; line-height: 1.6; margin: 0.4rem 0 0.8rem 0;}
+.emoji-calc {font-size: 2.3rem; line-height: 1; margin-bottom: 0.2rem;}
 .notas {display: flex; gap: 1rem; flex-wrap: wrap; margin: 0.8rem 0;}
 .nota {background: white; border-radius: 16px; padding: 0.8rem 1.2rem; min-width: 160px;}
 .nota b {font-family: 'Space Grotesk', sans-serif; font-size: 2rem;}
@@ -90,7 +93,7 @@ p, li, label, .stMarkdown {font-size: 1.08rem;}
 .boton-wa {display: flex; align-items: center; justify-content: center; gap: 0.7rem; background: WHATSAPP; color: white !important;
            text-decoration: none !important; border-radius: 999px; min-height: 3.6rem; font-weight: 700; font-size: 1.1rem;}
 .boton-wa:hover {filter: brightness(0.95);}
-.boton-wa img {width: 1.7rem; height: 1.7rem; filter: invert(1);}
+.boton-wa svg {flex-shrink: 0;}
 
 /* --- Formularios sin "cajita" --- */
 [data-testid="stForm"] {border: none !important; padding: 0 !important;}
@@ -168,7 +171,7 @@ ERROR_MAXIMO = {"en_blanco": 5, "impuestos": 40}
 # -------------------------------------------------------------
 PREGUNTAS = [
     # ---------- 💰 TU DINERO ----------
-    {"id": "interes_compuesto", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
+    {"id": "interes_compuesto", "titulo": "💰 Tu primera inversión", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
      "texto": "Ponés USD 1.000 en una inversión que rinde 10% por año y no retirás nada. El primer año ganás USD 100. ¿Y el segundo año?",
      "opciones": ["Gano USD 100 de nuevo", "Gano un poco más que USD 100", "Gano menos que USD 100"],
      "correcta": "Gano un poco más que USD 100",
@@ -180,7 +183,7 @@ Tu dinero genera dinero solo, como una bola de nieve que rueda cuesta abajo y ca
 📈 A los 10 años: <b>USD 2.594</b> (no 2.000). 🚀 A los 30 años: <b>USD 17.449</b>.<br><br>
 <b>Lo que importa no es cuánto ponés, sino cuánto tiempo dejás rodar la bola.</b>"""},
 
-    {"id": "la_vara", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
+    {"id": "la_vara", "titulo": "🛡️ A prueba de todo", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
      "texto": "¿Cuál de estas inversiones se considera la más segura del mundo?",
      "opciones": ["Oro", "Dólares en el colchón", "Bonos del Tesoro de EE.UU.", "Bitcoin"],
      "correcta": "Bonos del Tesoro de EE.UU.",
@@ -189,7 +192,7 @@ Tu dinero genera dinero solo, como una bola de nieve que rueda cuesta abajo y ca
 cualquier inversión o negocio tiene que ganarle.<br><br>
 Guardate este número, que lo vas a necesitar en la próxima pregunta. 😉"""},
 
-    {"id": "franquicia", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
+    {"id": "franquicia", "titulo": "🍔 La propuesta de un amigo", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
      "texto": "Un amigo te ofrece entrar en su franquicia: por cada USD 100 que ponés, ganás USD 4 por año. ¿Es buen negocio?",
      "opciones": ["Sí, gano dinero todos los años",
                   "No: rinde menos que una inversión sin riesgo, y encima yo pongo el riesgo",
@@ -198,11 +201,11 @@ Guardate este número, que lo vas a necesitar en la próxima pregunta. 😉"""},
      "escena": """📏 <b>La vara: 5% en dólares, sin riesgo y sin hacer nada.</b> Cualquier negocio tiene que ganarle, y <b>por bastante</b>: vos ponés riesgo, tiempo y laburo.<br><br>
 🍔 <b>Franquicia al 4%:</b> arriesgás tu dinero para ganar <i>menos</i> que alguien que no hizo nada.<br>
 🏢 <b>Departamento en alquiler:</b> si te deja 3 o 4% en dólares después de gastos, pasa lo mismo.<br><br>
-🚀 Siempre preguntate: <b>¿mi negocio le gana a la vara por lo suficiente?</b> Si no, hay que exprimirlo más.<br><br>
-Esto se llama <b>costo de oportunidad</b>: lo que dejás de ganar por elegir una opción y no otra.<br><br>
-🧮 <b>¿Y cómo lo mido?</b> Ganancia de un año ÷ dinero que pusiste. Ganás $4 por cada $100 → <b>4%</b>."""},
+🚀 Siempre preguntate: <b>¿mi negocio le gana a la vara por lo suficiente?</b> Si no, hay que exprimirlo más.
+Eso es el <b>costo de oportunidad</b>: lo que dejás de ganar por elegir una opción y no otra.<br><br>
+🧮 <b>¿Cómo lo mido?</b> Ganancia de un año ÷ dinero que pusiste: $4 ÷ $100 = <b>4%</b>."""},
 
-    {"id": "tasa_real", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
+    {"id": "tasa_real", "titulo": "📉 ¿Ganaste o perdiste?", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
      "texto": "Ponés $100 en algo que rinde 40% en el año, pero la inflación de ese año es 50%. ¿Qué pasó?",
      "opciones": ["Gané, porque ahora tengo $140", "Perdí poder de compra, aunque tenga más pesos", "Quedé igual"],
      "correcta": "Perdí poder de compra, aunque tenga más pesos",
@@ -212,22 +215,33 @@ Con tus $140 no te alcanza: <b>te faltan $10</b>.<br><br>
 <b>Tenés más billetes, pero podés comprar menos.</b> Lo que importa no es cuánto rinde tu dinero,
 sino si rinde <b>más que la inflación</b>. Eso se llama <b>tasa real</b>."""},
 
+
+    {"id": "colchon", "titulo": "🛏️ El colchón", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
+     "texto": "Una persona guarda todos sus ahorros en dólares durante varios años, sin invertirlos. ¿Qué pasa con ese dinero?",
+     "opciones": ["No pierde valor: el dólar es una moneda fuerte", "Pierde poder de compra de a poco, por la inflación de EE.UU.",
+                  "Gana valor solo, con el paso del tiempo", "Rinde más que cualquier inversión en pesos"],
+     "correcta": "Pierde poder de compra de a poco, por la inflación de EE.UU.",
+     "escena": """🛏️ <b>El dólar te cuida de la devaluación del peso… pero no de la inflación de EE.UU.</b> Allá los precios también suben, en promedio un 3% por año.<br><br>
+💵 Tus <b>USD 100</b> del colchón, en 10 años, compran lo mismo que hoy compran <b>unos USD 74</b>. No ves menos billetes, pero alcanzan para menos.<br><br>
+📏 <b>Acordate de la vara:</b> esos mismos USD 100 en un bono del Tesoro, a 5% por año, en 10 años serían <b>USD 163</b>.<br>
+<b>El dólar quieto también pierde. El dólar invertido, crece.</b>"""},
+
     # ---------- 🇦🇷 EL PAÍS ----------
-    {"id": "en_blanco", "area": "eco", "bloque": "El país", "tipo": "numero", "max": 10, "paso": 1.0, "prefijo": "", "sufijo": " de 10",
+    {"id": "en_blanco", "titulo": "🥩 El asado", "area": "eco", "bloque": "El país", "tipo": "numero", "max": 10, "paso": 1.0, "prefijo": "", "sufijo": " de 10",
      "texto": "De cada 10 personas que trabajan o buscan trabajo en Argentina, ¿cuántas tienen un trabajo en blanco (con aportes y obra social)?",
-     "escena": """🔥 <b>Imaginate un asado con 10 personas que trabajan o buscan laburo:</b><br>
+     "escena": """🥩 <b>Imaginate un asado con 10 personas que trabajan o buscan laburo:</b><br>
 <div class='personas'>🧑‍💼🧑‍💼🧑‍💼🧑‍💼🧑‍💼</div><b>5 tienen recibo de sueldo</b><br>
 <div class='personas'>🤫🤫🤫🤫</div><b>4 laburan en negro</b><br>
 <div class='personas'>🔍</div><b>1 está buscando trabajo</b><br><br>
 🤔 Solo 5 de cada 10 aportan… <b>¿Los números cierran?</b> Guardate esta pregunta: la retomamos al final. 😉"""},
 
-    {"id": "impuestos", "area": "eco", "bloque": "El país", "tipo": "numero", "max": 100, "paso": 1.0, "prefijo": "$", "sufijo": "",
+    {"id": "impuestos", "titulo": "🏭 Los impuestos", "area": "eco", "bloque": "El país", "tipo": "numero", "max": 100, "paso": 1.0, "prefijo": "$", "sufijo": "",
      "texto": "Una empresa en blanco en Argentina, de cada $100 que gana, ¿cuántos se le van en impuestos?",
      "escena": """🥇 <b>Argentina sale 1ª de 30 países</b> en impuestos sobre las empresas en blanco. Un campeonato que nadie quiere ganar.<br><br>
 🤔 <b>Pero en presión fiscal total, somos 12º.</b> ¿Cómo puede ser? Acordate del asado: solo 5 de cada 10 trabajan en blanco.<br>
 <b>Pagan pocos, y los que pagan, pagan por todos.</b>"""},
 
-    {"id": "banco_central", "area": "eco", "bloque": "El país", "tipo": "opcion",
+    {"id": "banco_central", "titulo": "🏦 El Banco Central", "area": "eco", "bloque": "El país", "tipo": "opcion",
      "texto": "El Banco Central sube fuerte la tasa de interés. ¿Qué busca lograr?",
      "opciones": ["Que sea más barato endeudarse y se consuma más",
                   "Encarecer el crédito para frenar el consumo y la inflación", "Que suban los sueldos"],
@@ -238,7 +252,7 @@ sino si rinde <b>más que la inflación</b>. Eso se llama <b>tasa real</b>."""},
 Menos gente gastando = <b>los precios suben más despacio</b>. Es como pisar el freno del auto 🚗:
 frena la inflación… pero también frena la economía."""},
 
-    {"id": "emision", "area": "eco", "bloque": "El país", "tipo": "opcion",
+    {"id": "emision", "titulo": "🖨️ La maquinita", "area": "eco", "bloque": "El país", "tipo": "opcion",
      "texto": "Un país imprime muchos más billetes, pero produce la misma cantidad de cosas. ¿Qué pasa?",
      "opciones": ["Hay más riqueza para todos", "Suben los precios", "No pasa nada, el dinero es solo papel"],
      "correcta": "Suben los precios",
@@ -247,6 +261,22 @@ Si de golpe se imprimen el doble de tickets, pero la pizza sigue siendo una sola
 <b>cada ticket alcanza para media porción.</b> 🤏<br><br>
 Con el dinero pasa lo mismo: si hay el doble de billetes pero las mismas cosas para comprar,
 <b>cada billete compra menos</b>. Eso es la inflación."""},
+    {"id": "dolar", "titulo": "💵 La obsesión nacional", "area": "eco", "bloque": "El país", "tipo": "opcion",
+     "texto": "Si el dólar pasa de $1.000 a $1.500, ¿cuál de estas afirmaciones describe mejor lo que sucede en la economía?",
+     "opciones": ["El peso pierde valor frente al dólar, y los productos importados podrían encarecerse",
+                  "El peso gana valor frente al dólar, porque ahora se necesitan más pesos para comprarlo",
+                  "Todos los precios de la economía aumentan automáticamente un 50%",
+                  "El cambio solo afecta a quienes compran dólares, sin impacto en el resto de la economía"],
+     "correcta": "El peso pierde valor frente al dólar, y los productos importados podrían encarecerse",
+     "escena": """💸 <b>Que el dólar suba significa que el peso vale menos.</b> Antes, con $1.000 comprabas un dólar; ahora necesitás $1.500. Eso es una <b>devaluación</b>.<br><br>
+📱 <b>Lo directo:</b> un celular importado de USD 100 pasa de $100.000 a $150.000.<br><br>
+🍞 <b>Lo indirecto:</b> ¿y el pan, que no tiene nada que ver con el dólar? Mirá la cadena:<br>
+⛽ Sube el combustible (su precio va atado al dólar)<br>
+→ 🚚 sube el flete que lleva el trigo al molino<br>
+→ 🌾 sube la harina<br>
+→ 🥖 sube el pan<br><br>
+Por eso, <b>cuando sube el dólar en Argentina, primero suben las cosas atadas al dólar, y después ese aumento se va contagiando</b>
+hasta productos que no tienen nada que ver. Y por eso todos miramos el dólar todo el tiempo. 👀"""},
 ]
 
 # Los 4 perfiles (nombres provisorios): (nivel en "El país", nivel en "Tu dinero")
@@ -266,7 +296,9 @@ PERCEPCION = ["Más de lo que pensaba", "Lo que pensaba", "Menos de lo que pensa
 
 SUGERENCIAS = ["¿Qué es un plazo fijo UVA?", "¿Cómo empiezo a invertir con poco?", "¿Por qué hay tanta inflación en Argentina?"]
 
-ICONO_WHATSAPP = "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/whatsapp.svg"
+LINK_APP = "https://test-economia.streamlit.app"
+# Logo de WhatsApp (Simple Icons, licencia CC0), dibujado en blanco
+ICONO_WHATSAPP = "<svg viewBox='0 0 24 24' width='28' height='28' fill='white' xmlns='http://www.w3.org/2000/svg'><path d='M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z'/></svg>"
 
 # -------------------------------------------------------------
 # 4. FUNCIONES
@@ -384,9 +416,8 @@ def grafico_cuadrado(notas):
                              marker=dict(size=26, color=ESPRESSO, line=dict(color="white", width=4)), hoverinfo="skip"))
     fig.update_layout(showlegend=False,
                       xaxis=dict(range=[0, 100], title="💰 Tu dinero →", showgrid=False, zeroline=False, tickvals=[0, 50, 100]),
-                      yaxis=dict(range=[0, 100], title="🇦🇷 El país →", showgrid=False, zeroline=False, tickvals=[0, 50, 100],
-                                 scaleanchor="x"))
-    return layout_base(fig, 440)
+                      yaxis=dict(range=[0, 100], title="🇦🇷 El país →", showgrid=False, zeroline=False, tickvals=[0, 50, 100]))
+    return layout_base(fig, 460)
 
 
 def grafico_barras(resp):
@@ -479,19 +510,34 @@ def devolucion(resp, notas, perfil, aciertos):
 Una persona acaba de hacer un test de economía y finanzas personales. Resultados:
 {chr(10).join(lineas)}
 
-Escribile una devolución personalizada en español rioplatense (voseo), de 120 a 170 palabras:
-1. Una primera frase con gancho sobre su perfil.
-2. Lo más importante que se le escapó y por qué le importa en su vida.
-3. Dos acciones concretas para esta semana, según lo que hoy hace con su dinero.
-4. Un cierre que la deje con ganas de informarse más.
+Escribile una devolución personalizada en español rioplatense (voseo), de 200 a 250 palabras.
+Hablale directo a ESA persona, como una amiga que sabe del tema: usá sus datos (su edad, qué hace con el dinero que le sobra,
+si ahorra para la jubilación y cómo se sintió al terminar el test) para que sienta que el texto es sobre ella, no genérico.
+1. Una primera frase con gancho que conecte su perfil con algo de su vida.
+2. Lo que hizo bien (reconocelo de verdad).
+3. Lo más importante que se le escapó y por qué le importa en su vida diaria, con un ejemplo concreto.
+4. Dos acciones concretas para esta semana, según lo que hoy hace con su dinero.
+5. Un cierre cálido que la deje con ganas de informarse más.
 Sin títulos. Podés usar **negrita** para 2 o 3 ideas clave. Usá "dinero", no "plata".
 No recomiendes productos, bancos ni empresas específicas. No opines de política."""
     respuesta = preguntar_a_claude(prompt)
     if respuesta:
         return respuesta
+    # Respaldo sin IA: igual lo armamos con los datos de la persona
     flojo = "la economía del país" if notas["eco"] < notas["fin"] else "el manejo de tu dinero"
-    return (f"Donde más margen tenés para mejorar es en **{flojo}**. Repasá las explicaciones de cada pregunta: "
-            "en 2 minutos sabés más que la mayoría.")
+    fuerte = "el manejo de tu dinero" if flojo == "la economía del país" else "la economía del país"
+    sobra = resp["dinero_que_sobra"].lower()
+    texto = (f"Con {resp['edad']} años, acertaste {aciertos} de {len(PREGUNTAS)}: **te defendés mejor en {fuerte}**, "
+             f"y donde más margen tenés es en **{flojo}**. ")
+    if resp["percepcion"] != "Más de lo que pensaba":
+        texto += ("Si terminaste sintiendo que sabés menos de lo que creías, ¡buenísimo!: es el primer paso, "
+                  "y la mayoría ni se lo pregunta. ")
+    texto += (f"Contaste que con el dinero que te sobra: *{sobra}*. Esta semana, hacé una sola cosa: fijate cuánto le rindió "
+              "a ese dinero en el último año y comparalo con la inflación y con la vara del 5% en dólares. ")
+    if resp["ahorro_jubilacion"] != "Sí":
+        texto += "Y si todavía no ahorrás para tu jubilación, mirá la calculadora de abajo: empezar con poco hoy vale más que mucho mañana. "
+    texto += "Repasá las explicaciones de cada pregunta: en 2 minutos sabés más que la mayoría. 🙌"
+    return texto
 
 
 def responder_consulta(texto, edad, aciertos):
@@ -546,7 +592,7 @@ def pregunta_simple(numero, etiqueta, texto, opciones, clave, siguiente, boton):
 if st.session_state.paso == "inicio":
     st.markdown(f"""<div class='hero-arriba'><div class='hero-grilla'>
         <div class='hero-texto'>
-          <div class='kicker'>Test de economía</div>
+          <div class='kicker'>Economía en 4 minutos</div>
           <h1>¿Te animás a descubrir cuánto sabés realmente de economía?</h1>
           <p>Todos opinamos de economía. Todos creemos que manejamos bien nuestro dinero.</p>
           <p class='oro'>En 4 minutos vas a saber si es cierto.</p>
@@ -588,7 +634,7 @@ elif st.session_state.paso == "preguntas":
     i = st.session_state.i
     p = PREGUNTAS[i]
     st.progress((i + 1) / TOTAL_PANTALLAS, text=f"Pregunta {i + 1} de {TOTAL_PANTALLAS}")
-    st.markdown(f"<div class='etiqueta'>{p['bloque']}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='etiqueta'>{p['bloque']}</div><div class='titulo-preg'>{p['titulo']}</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='pregunta'>{p['texto']}</div>", unsafe_allow_html=True)
 
     if not st.session_state.revelar:
@@ -674,27 +720,27 @@ elif st.session_state.paso == "resultado":
     with st.container(border=True):
         st.markdown(st.session_state.devolucion)
 
-    st.markdown("<div class='seccion'>Lo que creías vs. la realidad</div>", unsafe_allow_html=True)
-    st.plotly_chart(grafico_barras(resp), use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
 
     # ----- Cierre: los números no cierran + calculadora de inversión -----
     edad = resp["edad"]
-    st.markdown("<div class='seccion'>🔥 ¿Te acordás del asado?</div>", unsafe_allow_html=True)
-    st.markdown("Solo 5 de cada 10 aportan. Y además, cada vez hay menos trabajadores por cada jubilado. "
-                "**Los números no cierran.** ¿Quién va a pagar tu jubilación?")
+    st.markdown("<div class='seccion'>🥩 ¿Te acordás del asado?</div>", unsafe_allow_html=True)
+    st.markdown("<div class='destacado'>Solo 5 de cada 10 aportan. Y además, cada vez hay menos trabajadores por cada jubilado. "
+                "<b>Los números no cierran.</b> ¿Quién va a pagar tu jubilación?</div>", unsafe_allow_html=True)
     if edad < 30:
-        st.markdown("⛄ **La buena noticia:** tenés a tu favor lo que más pesa en la bola de nieve, que es **el tiempo**.")
+        cierre = "⛄ <b>La buena noticia:</b> tenés a tu favor lo que más pesa en la bola de nieve, que es <b>el tiempo</b>."
     elif edad < 50:
-        st.markdown("⛄ **Nunca es tarde, pero cada año cuenta.** La bola de nieve necesita tiempo para crecer.")
+        cierre = "⛄ <b>Nunca es tarde, pero cada año cuenta.</b> La bola de nieve necesita tiempo para crecer."
     else:
-        st.markdown("⛄ **Es momento de ordenar y proteger lo que ahorraste,** y de que cada peso que sumes trabaje para vos.")
+        cierre = "⛄ <b>Es momento de ordenar y proteger lo que ahorraste,</b> y de que cada peso que sumes trabaje para vos."
+    st.markdown(f"<div class='destacado'>{cierre}</div>", unsafe_allow_html=True)
 
     st.markdown("<div class='seccion'>🧮 Calculadora de inversión</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='billete'>{BILLETE}</div>", unsafe_allow_html=True)
     anios = max(65 - edad, 10)   # hasta los 65; si falta poco, mostramos 10 años
     c1, c2 = st.columns(2)
-    por_mes = c1.select_slider("💵 ¿Cuánto podrías ahorrar por mes? (USD)", options=[10, 20, 30, 50, 75, 100, 150, 200], value=50)
-    tasa = c2.select_slider("📈 ¿A qué tasa anual en dólares?", options=[3, 5, 7], value=5, format_func=lambda t: f"{t}%")
+    c1.markdown("<div class='emoji-calc'>💵</div>", unsafe_allow_html=True)
+    por_mes = c1.select_slider("¿Cuánto podrías ahorrar por mes? (USD)", options=[10, 20, 30, 50, 75, 100, 150, 200], value=50)
+    c2.markdown("<div class='emoji-calc'>📈</div>", unsafe_allow_html=True)
+    tasa = c2.select_slider("¿A qué tasa anual en dólares?", options=[3, 5, 7], value=5, format_func=lambda t: f"{t}%")
     st.markdown("<div class='letra-chica'>5% ≈ la vara (bono del Tesoro de EE.UU.) · 7% ≈ lo que rindió históricamente "
                 "la bolsa de EE.UU. después de la inflación, con más riesgo.</div>", unsafe_allow_html=True)
     tabla = simular_ahorro(por_mes, anios, tasa / 100)
@@ -714,10 +760,10 @@ elif st.session_state.paso == "resultado":
 
     # ----- Compartir por WhatsApp -----
     st.markdown("<div class='seccion'>¿Te animás a desafiar a alguien?</div>", unsafe_allow_html=True)
-    mensaje = (f"Hice el test \"{NOMBRE_APP}\": acerté {aciertos} de {len(PREGUNTAS)} y me salió "
-               f"{perfil['emoji']} *{perfil['nombre']}*. ¿A que no me ganás? {secreto('APP_URL') or ''}")
+    mensaje = ("¿Te animás a descubrir cuánto sabés realmente de economía? Yo ya lo hice y me dejó pensando. "
+               f"Son 4 minutos: {LINK_APP}")
     enlace = "https://wa.me/?text=" + urllib.parse.quote(mensaje)
-    st.markdown(f"<a class='boton-wa' href='{enlace}' target='_blank'><img src='{ICONO_WHATSAPP}' alt=''>"
+    st.markdown(f"<a class='boton-wa' href='{enlace}' target='_blank'>{ICONO_WHATSAPP}"
                 "Desafiá a alguien por WhatsApp</a>", unsafe_allow_html=True)
 
     # ----- Dejá tu pregunta -----
