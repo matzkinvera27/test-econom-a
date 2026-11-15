@@ -83,6 +83,22 @@ p, li, label, .stMarkdown {font-size: 1.08rem;}
 .titulo-preg {display: inline-block; background: ARENA; color: CHOCOLATE; border-radius: 999px; padding: 0.3rem 0.9rem; font-weight: 600; font-size: 0.98rem; margin-top: 0.6rem;}
 .destacado {font-size: 1.28rem; line-height: 1.6; margin: 0.4rem 0 0.8rem 0;}
 .emoji-calc {font-size: 2.3rem; line-height: 1; margin-bottom: 0.2rem;}
+.neutro {color: CHOCOLATE; font-family: 'Space Grotesk', sans-serif; font-size: 1.9rem; font-weight: 700;}
+.fila-emoji {display: flex; align-items: center; gap: 0.8rem; flex-wrap: nowrap; margin: 0.35rem 0;}
+.fila-emoji b {flex: 1; line-height: 1.3;}
+.fila-emoji .personas {font-size: clamp(1.25rem, 5.2vw, 2rem); letter-spacing: 0.1rem; line-height: 1.2; white-space: nowrap;}
+.racha {font-size: 1.05rem; letter-spacing: 0.15rem; margin: -0.4rem 0 0.2rem 0;}
+.racha-fuego {color: ROJO; font-weight: 700; letter-spacing: 0; margin-left: 0.4rem;}
+.puntos {font-size: 1.5rem; letter-spacing: 0.2rem; color: CARAMELO;}
+.pista {background: ARENA; border-radius: 14px; padding: 0.7rem 1rem; margin: 0.4rem 0 1rem 0; font-weight: 600;}
+/* Transiciones suaves: cada pantalla aparece con un fundido y un leve deslizamiento */
+@keyframes aparecer {from {opacity: 0; transform: translateY(14px);} to {opacity: 1; transform: none;}}
+.etiqueta, .titulo-preg, .pregunta, .escena, .ok, .mal, .neutro, .puntaje, .perfil, .notas, .racha,
+div[role="radiogroup"], [data-testid="stNumberInput"] {animation: aparecer 0.5s ease-out both;}
+/* Latido de las barritas de la calculadora, hasta que la persona las toca */
+@keyframes latido {0%, 100% {box-shadow: 0 0 0 0 rgba(192,133,82,0.55);} 50% {box-shadow: 0 0 0 12px rgba(192,133,82,0);}}
+[data-testid="stSlider"] [role="slider"] {animation: latido 1.6s ease-in-out infinite; transform: scale(1.35);}
+[data-testid="stSlider"] [role="slider"]:focus, [data-testid="stSlider"] [role="slider"]:active {animation: none;}
 .notas {display: flex; gap: 1rem; flex-wrap: wrap; margin: 0.8rem 0;}
 .nota {background: white; border-radius: 16px; padding: 0.8rem 1.2rem; min-width: 160px;}
 .nota b {font-family: 'Space Grotesk', sans-serif; font-size: 2rem;}
@@ -181,6 +197,8 @@ PREGUNTAS = [
 ⚪ <b>Año 3:</b> ganás USD 121 → tenés USD 1.331<br><br>
 Tu dinero genera dinero solo, como una bola de nieve que rueda cuesta abajo y cada vuelta junta más nieve. ⛄<br><br>
 📈 A los 10 años: <b>USD 2.594</b> (no 2.000). 🚀 A los 30 años: <b>USD 17.449</b>.<br><br>
+📚 <b>Esto tiene nombre: se llama interés compuesto.</b> Es ganar intereses sobre los intereses que ya ganaste.
+Acordate de esta palabra, porque es la base de cualquier inversión.<br><br>
 <b>Lo que importa no es cuánto ponés, sino cuánto tiempo dejás rodar la bola.</b>"""},
 
     {"id": "la_vara", "titulo": "🛡️ A prueba de todo", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
@@ -194,10 +212,9 @@ Guardate este número, que lo vas a necesitar en la próxima pregunta. 😉"""},
 
     {"id": "franquicia", "titulo": "🍔 La propuesta de un amigo", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
      "texto": "Un amigo te ofrece entrar en su franquicia: por cada USD 100 que ponés, ganás USD 4 por año. ¿Es buen negocio?",
-     "opciones": ["Sí, gano dinero todos los años",
-                  "No: rinde menos que una inversión sin riesgo, y encima yo pongo el riesgo",
-                  "Depende de dónde esté el local"],
-     "correcta": "No: rinde menos que una inversión sin riesgo, y encima yo pongo el riesgo",
+     "opciones": ["Sí, porque gano dinero todos los años", "Sí, porque 4% por año es un buen rendimiento",
+                  "No, porque gana menos que una inversión sin riesgo", "Depende de dónde esté el local"],
+     "correcta": "No, porque gana menos que una inversión sin riesgo",
      "escena": """📏 <b>La vara: 5% en dólares, sin riesgo y sin hacer nada.</b> Cualquier negocio tiene que ganarle, y <b>por bastante</b>: vos ponés riesgo, tiempo y laburo.<br><br>
 🍔 <b>Franquicia al 4%:</b> arriesgás tu dinero para ganar <i>menos</i> que alguien que no hizo nada.<br>
 🏢 <b>Departamento en alquiler:</b> si te deja 3 o 4% en dólares después de gastos, pasa lo mismo.<br><br>
@@ -206,12 +223,12 @@ Eso es el <b>costo de oportunidad</b>: lo que dejás de ganar por elegir una opc
 🧮 <b>¿Cómo lo mido?</b> Ganancia de un año ÷ dinero que pusiste: $4 ÷ $100 = <b>4%</b>."""},
 
     {"id": "tasa_real", "titulo": "📉 ¿Ganaste o perdiste?", "area": "fin", "bloque": "Tu dinero", "tipo": "opcion",
-     "texto": "Ponés $100 en algo que rinde 40% en el año, pero la inflación de ese año es 50%. ¿Qué pasó?",
-     "opciones": ["Gané, porque ahora tengo $140", "Perdí poder de compra, aunque tenga más pesos", "Quedé igual"],
-     "correcta": "Perdí poder de compra, aunque tenga más pesos",
-     "escena": """🛒 Tus $100 se hicieron <b>$140</b>. ¡Bien! 🎉<br>
-Pero el changuito que antes costaba $100, ahora cuesta <b>$150</b>. 😬<br>
-Con tus $140 no te alcanza: <b>te faltan $10</b>.<br><br>
+     "texto": "Ponés $100.000 en algo que rinde 40% en el año, pero la inflación de ese año es 50%. Al final del año, ¿cuántas cosas podés comprar con tu dinero?",
+     "opciones": ["Un 40% más que antes", "Un poco más que antes", "Menos que antes", "Lo mismo que antes"],
+     "correcta": "Menos que antes",
+     "escena": """🛒 Tus $100.000 se hicieron <b>$140.000</b>. ¡Bien! 🕺🍾<br>
+Pero el changuito que antes costaba $100.000, ahora cuesta <b>$150.000</b>. 😬<br>
+Con tus $140.000 no te alcanza: <b>te faltan $10.000</b>.<br><br>
 <b>Tenés más billetes, pero podés comprar menos.</b> Lo que importa no es cuánto rinde tu dinero,
 sino si rinde <b>más que la inflación</b>. Eso se llama <b>tasa real</b>."""},
 
@@ -230,9 +247,9 @@ sino si rinde <b>más que la inflación</b>. Eso se llama <b>tasa real</b>."""},
     {"id": "en_blanco", "titulo": "🥩 El asado", "area": "eco", "bloque": "El país", "tipo": "numero", "max": 10, "paso": 1.0, "prefijo": "", "sufijo": " de 10",
      "texto": "De cada 10 personas que trabajan o buscan trabajo en Argentina, ¿cuántas tienen un trabajo en blanco (con aportes y obra social)?",
      "escena": """🥩 <b>Imaginate un asado con 10 personas que trabajan o buscan laburo:</b><br>
-<div class='personas'>🧑‍💼🧑‍💼🧑‍💼🧑‍💼🧑‍💼</div><b>5 tienen recibo de sueldo</b><br>
-<div class='personas'>🤫🤫🤫🤫</div><b>4 laburan en negro</b><br>
-<div class='personas'>🔍</div><b>1 está buscando trabajo</b><br><br>
+<div class='fila-emoji'><span class='personas'>🧑‍💼🧑‍💼🧑‍💼🧑‍💼🧑‍💼</span><b>5 tienen recibo de sueldo</b></div>
+<div class='fila-emoji'><span class='personas'>🤫🤫🤫🤫</span><b>4 laburan en negro</b></div>
+<div class='fila-emoji'><span class='personas'>🔍</span><b>1 está buscando trabajo</b></div><br>
 🤔 Solo 5 de cada 10 aportan… <b>¿Los números cierran?</b> Guardate esta pregunta: la retomamos al final. 😉"""},
 
     {"id": "impuestos", "titulo": "🏭 Los impuestos", "area": "eco", "bloque": "El país", "tipo": "numero", "max": 100, "paso": 1.0, "prefijo": "$", "sufijo": "",
@@ -253,13 +270,13 @@ Menos gente gastando = <b>los precios suben más despacio</b>. Es como pisar el 
 frena la inflación… pero también frena la economía."""},
 
     {"id": "emision", "titulo": "🖨️ La maquinita", "area": "eco", "bloque": "El país", "tipo": "opcion",
-     "texto": "Un país imprime muchos más billetes, pero produce la misma cantidad de cosas. ¿Qué pasa?",
+     "texto": "Un país imprime muchos más billetes, pero produce la misma cantidad de bienes y servicios. ¿Qué pasa?",
      "opciones": ["Hay más riqueza para todos", "Suben los precios", "No pasa nada, el dinero es solo papel"],
      "correcta": "Suben los precios",
      "escena": """🍕 Imaginá <b>una pizza de 8 porciones</b>, y cada porción se canjea con un ticket.<br>
 Si de golpe se imprimen el doble de tickets, pero la pizza sigue siendo una sola…<br>
 <b>cada ticket alcanza para media porción.</b> 🤏<br><br>
-Con el dinero pasa lo mismo: si hay el doble de billetes pero las mismas cosas para comprar,
+Con el dinero pasa lo mismo: si hay el doble de billetes pero los mismos bienes y servicios para comprar,
 <b>cada billete compra menos</b>. Eso es la inflación."""},
     {"id": "dolar", "titulo": "💵 La obsesión nacional", "area": "eco", "bloque": "El país", "tipo": "opcion",
      "texto": "Si el dólar pasa de $1.000 a $1.500, ¿cuál de estas afirmaciones describe mejor lo que sucede en la economía?",
@@ -278,6 +295,12 @@ Con el dinero pasa lo mismo: si hay el doble de billetes pero las mismas cosas p
 Por eso, <b>cuando sube el dólar en Argentina, primero suben las cosas atadas al dólar, y después ese aumento se va contagiando</b>
 hasta productos que no tienen nada que ver. Y por eso todos miramos el dólar todo el tiempo. 👀"""},
 ]
+
+# Orden en que aparecen: intercaladas, respetando las que se nombran entre sí
+# (la vara → franquicia, asado → impuestos, la vara → colchón)
+ORDEN = ["interes_compuesto", "en_blanco", "impuestos", "la_vara", "franquicia",
+         "emision", "tasa_real", "banco_central", "dolar", "colchon"]
+PREGUNTAS = [next(p for p in PREGUNTAS if p["id"] == pid) for pid in ORDEN]
 
 # Los 4 perfiles (nombres provisorios): (nivel en "El país", nivel en "Tu dinero")
 PERFILES = {
@@ -350,18 +373,21 @@ def acerto(p, respuesta):
     return puntaje_pregunta(p, respuesta) >= 0.8
 
 
+POR_AREA = 5   # preguntas de cada área
+
+
 def calcular_notas(resp):
-    """Nota de 'El país' (eco) y de 'Tu dinero' (fin), de 0 a 100."""
-    notas = {}
-    for area in ["eco", "fin"]:
-        preguntas = [p for p in PREGUNTAS if p["area"] == area]
-        notas[area] = round(100 * sum(puntaje_pregunta(p, resp[p["id"]]) for p in preguntas) / len(preguntas))
-    return notas
+    """Aciertos en 'El país' (eco) y en 'Tu dinero' (fin), de 0 a 5."""
+    return {area: sum(acerto(p, resp[p["id"]]) for p in PREGUNTAS if p["area"] == area) for area in ["eco", "fin"]}
 
 
 def elegir_perfil(notas):
-    nivel = lambda n: "alto" if n >= 50 else "bajo"
+    nivel = lambda n: "alto" if n >= 3 else "bajo"   # 3 de 5 o más = mitad alta
     return PERFILES[(nivel(notas["eco"]), nivel(notas["fin"]))]
+
+
+def puntitos(n, total=POR_AREA):
+    return "●" * n + "○" * (total - n)
 
 
 def layout_base(fig, alto):
@@ -410,7 +436,9 @@ def grafico_cuadrado(notas):
                            showarrow=False, font=dict(size=12, color=CHOCOLATE))
     fig.add_shape(type="line", x0=50, x1=50, y0=0, y1=100, line=dict(color="#B9A797", width=1))
     fig.add_shape(type="line", x0=0, x1=100, y0=50, y1=50, line=dict(color="#B9A797", width=1))
-    x, y = min(max(notas["fin"], 4), 96), min(max(notas["eco"], 4), 90)
+    # El punto se ubica según los aciertos de cada área (0 a 5 → 0 a 100)
+    x = min(max(notas["fin"] / POR_AREA * 100, 4), 96)
+    y = min(max(notas["eco"] / POR_AREA * 100, 4), 90)
     fig.add_trace(go.Scatter(x=[x], y=[y], mode="markers+text", text=["  VOS"], textposition="middle right",
                              textfont=dict(size=16, color=ESPRESSO, family="Space Grotesk"), cliponaxis=False,
                              marker=dict(size=26, color=ESPRESSO, line=dict(color="white", width=4)), hoverinfo="skip"))
@@ -475,28 +503,37 @@ def guardar(fila, hoja_nombre="respuestas"):
     pd.DataFrame([fila]).to_csv(archivo, mode="a", header=not archivo.exists(), index=False)
 
 
+MODELOS_CLAUDE = ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-haiku-4-5", "claude-sonnet-4-5", "claude-3-5-haiku-latest"]
+DEBUG = st.query_params.get("debug") == "1"   # entrar con ?debug=1 muestra los errores de la IA (solo para Vera)
+
+
 def preguntar_a_claude(prompt, max_tokens=600):
-    """Le manda un pedido a Claude. Si no está configurado o falla, devuelve None."""
+    """Le manda un pedido a Claude. Si no está configurado o falla, devuelve None (y en modo debug muestra por qué)."""
     clave = secreto("ANTHROPIC_API_KEY")
+    errores = []
     if not clave:
-        return None
-    try:
-        import anthropic
-        cliente = anthropic.Anthropic(api_key=clave)
-        for modelo in [secreto("CLAUDE_MODEL") or "claude-haiku-5-5", "claude-sonnet-5-5"]:
-            try:
-                msj = cliente.messages.create(model=modelo, max_tokens=max_tokens,
-                                              messages=[{"role": "user", "content": prompt}])
-                return msj.content[0].text
-            except Exception:
-                continue
-    except Exception:
-        pass
+        errores.append("No encontré ANTHROPIC_API_KEY en los Secrets de Streamlit.")
+    else:
+        try:
+            import anthropic
+            cliente = anthropic.Anthropic(api_key=str(clave).strip())
+            modelos = ([secreto("CLAUDE_MODEL")] if secreto("CLAUDE_MODEL") else []) + MODELOS_CLAUDE
+            for modelo in modelos:
+                try:
+                    msj = cliente.messages.create(model=modelo, max_tokens=max_tokens,
+                                                  messages=[{"role": "user", "content": prompt}])
+                    return msj.content[0].text
+                except Exception as e:
+                    errores.append(f"{modelo}: {type(e).__name__}: {e}")
+        except Exception as e:
+            errores.append(f"No se pudo usar la librería anthropic: {type(e).__name__}: {e}")
+    if DEBUG:
+        st.error("🔧 Diagnóstico de la IA:\n\n" + "\n\n".join(errores))
     return None
 
 
 def devolucion(resp, notas, perfil, aciertos):
-    lineas = [f"Aciertos: {aciertos} de {len(PREGUNTAS)}. Nota El país: {notas['eco']}/100. Nota Tu dinero: {notas['fin']}/100. "
+    lineas = [f"Aciertos: {aciertos} de {len(PREGUNTAS)}. El país: {notas['eco']} de 5. Tu dinero: {notas['fin']} de 5. "
               f"Perfil: {perfil['nombre']}. Edad: {resp['edad']}.",
               f"Qué hace con el dinero que le sobra: {resp['dinero_que_sobra']}. Ahorra para la jubilación: {resp['ahorro_jubilacion']}. "
               f"Después del test siente que sabe: {resp['percepcion']}."]
@@ -540,6 +577,48 @@ No recomiendes productos, bancos ni empresas específicas. No opines de polític
     return texto
 
 
+def tarjeta_resultado(aciertos, notas, perfil):
+    """Arma una imagen PNG con el resultado, para descargar."""
+    import io
+    import textwrap
+    from PIL import Image, ImageDraw, ImageFont
+
+    def fuente(tam, negrita=False):
+        # Letra Inter (licencia libre OFL), guardada en la carpeta fonts/ para que se vean los acentos
+        archivo = Path(__file__).parent / "fonts" / ("Inter-Bold.otf" if negrita else "Inter-Regular.otf")
+        try:
+            return ImageFont.truetype(str(archivo), tam)
+        except Exception:
+            return ImageFont.load_default()
+
+    W, H = 1080, 1350
+    img = Image.new("RGB", (W, H), ESPRESSO)
+    d = ImageDraw.Draw(img)
+    x = 90
+    d.text((x, 110), "ECONOMÍA EN 4 MINUTOS", font=fuente(34, True), fill=CARAMELO)
+    d.text((x, 200), "Acerté", font=fuente(60), fill=CREMA)
+    d.text((x, 270), f"{aciertos} de {len(PREGUNTAS)}", font=fuente(190, True), fill=CREMA)
+    d.text((x, 520), f"Soy {perfil['nombre']}", font=fuente(68, True), fill=CARAMELO)
+    y = 620
+    for linea in textwrap.wrap(perfil["texto"], width=42):
+        d.text((x, y), linea, font=fuente(38), fill="#D9CBBB")
+        y += 52
+    y += 50
+    for etiqueta, n in [("El país", notas["eco"]), ("Tu dinero", notas["fin"])]:
+        d.text((x, y), etiqueta, font=fuente(44), fill=CREMA)
+        for k in range(POR_AREA):
+            cx = x + 330 + k * 70
+            d.ellipse((cx, y + 4, cx + 46, y + 50), fill=CARAMELO if k < n else None, outline=CARAMELO, width=4)
+        d.text((x + 700, y), f"{n} de {POR_AREA}", font=fuente(44), fill=CREMA)
+        y += 100
+    d.line((x, 1130, W - x, 1130), fill="#5A4636", width=2)
+    d.text((x, 1170), "¿Te animás a descubrir cuánto sabés?", font=fuente(40, True), fill=CREMA)
+    d.text((x, 1230), LINK_APP.replace("https://", ""), font=fuente(40), fill=CARAMELO)
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
 def responder_consulta(texto, edad, aciertos):
     guardar({"fecha": datetime.now().isoformat(timespec="seconds"), "edad": edad, "aciertos": aciertos,
              "pregunta": texto}, hoja_nombre="preguntas")
@@ -565,6 +644,7 @@ if "paso" not in st.session_state:
     st.session_state.revelar = False
     st.session_state.guardado = False
     st.session_state.consultas = []
+    st.session_state.historial = []   # aciertos de cada pregunta respondida, para la racha
 
 
 def ir_a(paso):
@@ -634,6 +714,16 @@ elif st.session_state.paso == "preguntas":
     i = st.session_state.i
     p = PREGUNTAS[i]
     st.progress((i + 1) / TOTAL_PANTALLAS, text=f"Pregunta {i + 1} de {TOTAL_PANTALLAS}")
+    # La racha: ✅/❌ de lo respondido y ○ de lo que falta; si van 3 o más seguidas bien, se festeja
+    historial = st.session_state.historial
+    marcas = "".join("✅" if ok else "❌" for ok in historial) + "○" * (len(PREGUNTAS) - len(historial))
+    seguidas = 0
+    for ok in reversed(historial):
+        if not ok:
+            break
+        seguidas += 1
+    fuego = f"<span class='racha-fuego'>🔥 ¡{seguidas} seguidas!</span>" if seguidas >= 3 else ""
+    st.markdown(f"<div class='racha'>{marcas}{fuego}</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='etiqueta'>{p['bloque']}</div><div class='titulo-preg'>{p['titulo']}</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='pregunta'>{p['texto']}</div>", unsafe_allow_html=True)
 
@@ -652,13 +742,16 @@ elif st.session_state.paso == "preguntas":
                     st.error("Respondé para seguir.")
                 else:
                     st.session_state.resp[p["id"]] = valor
+                    st.session_state.historial.append(acerto(p, valor))
                     st.session_state.revelar = True
                     st.rerun()
     else:
         r = st.session_state.resp[p["id"]]
         if p["tipo"] == "numero":
             real = DATOS_REALES[p["id"]]["valor"]
-            if acerto(p, r):
+            if r == real:
+                st.markdown("<div class='ok'>¡Exacto! 🎯</div>", unsafe_allow_html=True)
+            elif acerto(p, r):
                 st.markdown("<div class='ok'>¡Muy cerca! ✅</div>", unsafe_allow_html=True)
             else:
                 st.markdown(f"<div class='mal'>{'Te pasaste' if r > real else 'Te quedaste corto/a'} ❌</div>", unsafe_allow_html=True)
@@ -667,6 +760,9 @@ elif st.session_state.paso == "preguntas":
         else:
             if r == p["correcta"]:
                 st.markdown("<div class='ok'>¡Bien ahí! ✅</div>", unsafe_allow_html=True)
+            elif r == "No sé":
+                st.markdown(f"<div class='neutro'>¡Jajaja, gracias por la honestidad! 🙌</div><p>Acá te lo explico. "
+                            f"La respuesta es: <b>{p['correcta']}</b></p>", unsafe_allow_html=True)
             else:
                 st.markdown(f"<div class='mal'>Nop ❌</div><p>La correcta es: <b>{p['correcta']}</b></p>", unsafe_allow_html=True)
         st.markdown(f"<div class='escena'>{p['escena']}</div>", unsafe_allow_html=True)
@@ -707,8 +803,9 @@ elif st.session_state.paso == "resultado":
     st.markdown(f"<div class='perfil'>{perfil['emoji']} Sos {perfil['nombre']}</div>", unsafe_allow_html=True)
     st.markdown(perfil["texto"])
     st.markdown(f"""<div class='notas'>
-        <div class='nota'>🇦🇷 El país<br><b>{notas['eco']}</b>/100</div>
-        <div class='nota'>💰 Tu dinero<br><b>{notas['fin']}</b>/100</div></div>""", unsafe_allow_html=True)
+        <div class='nota'>🇦🇷 Economía del país<br><span class='puntos'>{puntitos(notas['eco'])}</span> <b>{notas['eco']}</b> de {POR_AREA}</div>
+        <div class='nota'>💰 Tu dinero<br><span class='puntos'>{puntitos(notas['fin'])}</span> <b>{notas['fin']}</b> de {POR_AREA}</div></div>""",
+                unsafe_allow_html=True)
 
     st.markdown("<div class='seccion'>Dónde estás parado/a</div>", unsafe_allow_html=True)
     st.plotly_chart(grafico_cuadrado(notas), use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
@@ -734,13 +831,17 @@ elif st.session_state.paso == "resultado":
         cierre = "⛄ <b>Es momento de ordenar y proteger lo que ahorraste,</b> y de que cada peso que sumes trabaje para vos."
     st.markdown(f"<div class='destacado'>{cierre}</div>", unsafe_allow_html=True)
 
+    st.download_button("📥 Descargá tu resultado", data=tarjeta_resultado(aciertos, notas, perfil),
+                       file_name="mi-resultado-economia-en-4-minutos.png", mime="image/png", use_container_width=True)
+
     st.markdown("<div class='seccion'>🧮 Calculadora de inversión</div>", unsafe_allow_html=True)
+    st.markdown("<div class='pista'>👉 Mové las barritas ← → y mirá cómo crece tu dinero</div>", unsafe_allow_html=True)
     anios = max(65 - edad, 10)   # hasta los 65; si falta poco, mostramos 10 años
     c1, c2 = st.columns(2)
     c1.markdown("<div class='emoji-calc'>💵</div>", unsafe_allow_html=True)
-    por_mes = c1.select_slider("¿Cuánto podrías ahorrar por mes? (USD)", options=[10, 20, 30, 50, 75, 100, 150, 200], value=50)
+    por_mes = c1.slider("¿Cuánto podrías ahorrar por mes? (USD)", min_value=5, max_value=500, value=50, step=5)
     c2.markdown("<div class='emoji-calc'>📈</div>", unsafe_allow_html=True)
-    tasa = c2.select_slider("¿A qué tasa anual en dólares?", options=[3, 5, 7], value=5, format_func=lambda t: f"{t}%")
+    tasa = c2.slider("¿A qué tasa anual en dólares?", min_value=2, max_value=8, value=5, step=1, format="%d%%")
     st.markdown("<div class='letra-chica'>5% ≈ la vara (bono del Tesoro de EE.UU.) · 7% ≈ lo que rindió históricamente "
                 "la bolsa de EE.UU. después de la inflación, con más riesgo.</div>", unsafe_allow_html=True)
     tabla = simular_ahorro(por_mes, anios, tasa / 100)
