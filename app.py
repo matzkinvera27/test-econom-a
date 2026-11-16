@@ -419,9 +419,18 @@ def calcular_notas(resp):
     return {area: sum(acerto(p, resp[p["id"]]) for p in PREGUNTAS if p["area"] == area) for area in ["eco", "fin"]}
 
 
+CORTE_ALTO = 4   # 4 de 5 o más = "alto" (con 3 casi todos salían La Calculadora)
+
+
 def elegir_perfil(notas):
-    nivel = lambda n: "alto" if n >= 3 else "bajo"   # 3 de 5 o más = mitad alta
+    nivel = lambda n: "alto" if n >= CORTE_ALTO else "bajo"
     return PERFILES[(nivel(notas["eco"]), nivel(notas["fin"]))]
+
+
+def posicion(n):
+    """Ubica una nota (0 a 5) en el cuadrado (0 a 100), con la línea del medio justo entre 3 y 4."""
+    medio = CORTE_ALTO - 0.5
+    return n / medio * 50 if n <= medio else 50 + (n - medio) / (POR_AREA - medio) * 50
 
 
 def puntitos(n, total=POR_AREA):
@@ -475,8 +484,8 @@ def grafico_cuadrado(notas):
     fig.add_shape(type="line", x0=50, x1=50, y0=0, y1=100, line=dict(color="#B9A797", width=1))
     fig.add_shape(type="line", x0=0, x1=100, y0=50, y1=50, line=dict(color="#B9A797", width=1))
     # El punto se ubica según los aciertos de cada área (0 a 5 → 0 a 100)
-    x = min(max(notas["fin"] / POR_AREA * 100, 4), 96)
-    y = min(max(notas["eco"] / POR_AREA * 100, 4), 90)
+    x = min(max(posicion(notas["fin"]), 4), 96)
+    y = min(max(posicion(notas["eco"]), 4), 90)
     fig.add_trace(go.Scatter(x=[x], y=[y], mode="markers+text", text=["  VOS"], textposition="middle right",
                              textfont=dict(size=16, color=ESPRESSO, family="Space Grotesk"), cliponaxis=False,
                              marker=dict(size=26, color=ESPRESSO, line=dict(color="white", width=4)), hoverinfo="skip"))
@@ -751,9 +760,9 @@ def imagen_cuadrado(notas):
         x0, y0 = m + cx * mitad, 20 + cy * mitad
         d.rectangle((x0, y0, x0 + mitad, y0 + mitad), fill=color)
         d.text((x0 + 14, y0 + 12), PERFILES[clave]["nombre"], font=fuente(24), fill=CHOCOLATE)
-    px = m + notas["fin"] / POR_AREA * lado
-    py = 20 + lado - notas["eco"] / POR_AREA * lado
-    px, py = min(max(px, m + 22), m + lado - 22), min(max(py, 42), 20 + lado - 22)
+    px = m + posicion(notas["fin"]) / 100 * lado
+    py = 20 + lado - posicion(notas["eco"]) / 100 * lado
+    px, py = min(max(px, m + 22), m + lado - 22), min(max(py, 80), 20 + lado - 22)
     d.ellipse((px - 18, py - 18, px + 18, py + 18), fill=ESPRESSO, outline="white", width=5)
     d.text((px + 26, py - 16), "VOS", font=fuente(28), fill=ESPRESSO)
     d.text((m + lado // 2 - 70, 20 + lado + 18), "Tu dinero →", font=fuente(26), fill=CHOCOLATE)
@@ -907,8 +916,13 @@ def informe_pdf(resp, aciertos, notas, perfil, devolucion_texto, calculo):
 
 
 def responder_consulta(texto, edad, aciertos):
-    guardar({"fecha": datetime.now().isoformat(timespec="seconds"), "edad": edad, "aciertos": aciertos,
-             "pregunta": texto}, hoja_nombre="preguntas")
+    if any(p == texto for p, _ in st.session_state.consultas):
+        return   # ya está respondida (por ejemplo, tocó el botón dos veces)
+    guardadas = st.session_state.setdefault("consultas_guardadas", set())
+    if texto not in guardadas:   # se guarda una sola vez en la planilla
+        guardadas.add(texto)
+        guardar({"fecha": datetime.now().isoformat(timespec="seconds"), "edad": edad, "aciertos": aciertos,
+                 "pregunta": texto}, hoja_nombre="preguntas")
     with st.spinner("Pensando..."):
         respuesta = preguntar_a_claude(
             f"""Respondé esta pregunta de una persona que no estudió economía, en español rioplatense (voseo),
