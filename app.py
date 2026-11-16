@@ -591,7 +591,8 @@ Hablale directo a ESA persona, como una amiga que sabe del tema: usá sus datos 
 si ahorra para la jubilación y cómo se sintió al terminar el test) para que sienta que el texto es sobre ella, no genérico.
 1. Una primera frase con gancho que conecte su perfil con algo de su vida.
 2. Lo más importante que se le escapó y por qué le importa, en una o dos frases.
-3. Una acción concreta para esta semana, según lo que hoy hace con su dinero.
+3. Una acción concreta y simple para esta semana, según lo que hoy hace con su dinero. Pensá que quizás nunca invirtió:
+si usás un término como cuenta comitente o bono, explicalo en pocas palabras. Si no le sobra dinero, no la juzgues.
 4. Un cierre cálido y corto que la deje con ganas de informarse más.
 Ortografía: el nombre del país se escribe siempre con mayúscula (Argentina).
 Sin títulos. Podés usar **negrita** para 2 o 3 ideas clave. Usá "dinero", no "plata".
@@ -657,6 +658,40 @@ def tarjeta_resultado(aciertos, notas, perfil):
     img.save(buffer, format="PNG")
     return buffer.getvalue()
 
+# Mensaje de cierre según qué hace con el dinero que le sobra (primera pantalla)
+EMPEZAR = {
+    "No me sobra": "Llegar a fin de mes ya es un montón, y hay meses en los que directamente no se puede. Si en algún "
+                   "momento tenés un margen, probá esto: en vez de ahorrar lo que sobra a fin de mes, **separá un poquito "
+                   "apenas cobrás** (aunque sea un 5%) y acomodá el resto alrededor. Parece poco, pero así arranca la bola de nieve.",
+    "Lo gasto": "Es lo más común: si el dinero está a mano, se va. Un truco que ayuda: en vez de ahorrar lo que sobra, "
+                "**separá apenas cobrás** (aunque sea un 5%) y ajustá un poco algún gasto del mes. Siempre hay alguno que "
+                "se puede achicar sin que te cambie la vida. Así arranca la bola de nieve.",
+    "Lo dejo en la cuenta o billetera virtual": "Ya tenés lo más difícil: **un dinero que no gastás**. El próximo paso es "
+                "ponerlo a trabajar, para que no pierda contra la inflación mientras espera.",
+    "Plazo fijo": "Ya diste un primer paso: **tu dinero gana algo**. Acordate de la tasa real: lo que importa es si le gana "
+                  "a la inflación. Hay otras opciones que podés conocer.",
+    "Compro dólares": "Te cubrís de la devaluación, que no es poco. Pero acordate del colchón: **el dólar quieto también "
+                      "pierde de a poco**. Esos dólares también se pueden invertir.",
+    "Lo invierto (acciones, bonos, FCI, cripto)": "**¡Espectacular!** Ya estás haciendo algo que la mayoría no hace. Dos cosas "
+                  "para seguir creciendo: compará lo que te rinde con **la vara** (los bonos del Tesoro de EE.UU., cerca de 5% "
+                  "en dólares), y si tenés dudas, consultá con un asesor o con alguien de confianza que sepa. Y si te animás, "
+                  "¡compartí el test con alguien que todavía no empezó!",
+}
+PASOS_EMPEZAR = [
+    ("Informate.", "No hace falta ser experto: alcanza con entender qué estás comprando, cuánto puede rendir y qué riesgo tiene."),
+    ("Abrí una cuenta comitente.", "Es como una cuenta del banco, pero para invertir: desde ahí comprás bonos, acciones o "
+     "fondos. Se abre online en un agente de bolsa, en general es gratis y lleva unos minutos."),
+    ("Preguntá antes de invertir.", "Muchos agentes de bolsa tienen asesores que te responden las dudas, y también podés "
+     "preguntarle a alguien de confianza que ya invierta. Y ojo con las estafas: fijate que quien maneje tu dinero esté "
+     "registrado en la CNV (Comisión Nacional de Valores), y desconfiá si te prometen ganancias altas y seguras."),
+]
+# Versión corta de los pasos, para el PDF
+PASOS_CORTOS = [
+    ("Informate:", "entendé qué estás comprando, cuánto puede rendir y qué riesgo tiene."),
+    ("Abrí una cuenta comitente:", "es como una cuenta del banco, pero para invertir. Se abre online en un agente de bolsa."),
+    ("Preguntá antes de invertir", "(a un asesor o a alguien de confianza) y fijate que quien maneje tu dinero esté registrado en la CNV."),
+]
+
 
 def sin_emojis(texto):
     """Las letras del PDF no tienen emojis: los sacamos (y también la negrita de markdown)."""
@@ -696,8 +731,8 @@ def imagen_cuadrado(notas):
     return buffer
 
 
-def informe_pdf(resp, aciertos, notas, perfil, devolucion_texto, calculo):
-    """Arma el informe en PDF: página 1 = tu resultado; página 2 = lo que aprendiste."""
+def _armar_pdf(resp, aciertos, notas, perfil, parrafos, calculo, k):
+    """Arma el PDF con una escala de letra k (1 = normal; menos de 1 = más chico, para que entre en 2 hojas)."""
     from fpdf import FPDF
     carpeta = Path(__file__).parent / "fonts"
     pdf = FPDF(format="A4")
@@ -708,17 +743,17 @@ def informe_pdf(resp, aciertos, notas, perfil, devolucion_texto, calculo):
     ancho = 180
 
     def titulo_seccion(texto):
-        pdf.ln(4)
-        pdf.set_font("DejaVu", "B", 13)
+        pdf.ln(3 * k)
+        pdf.set_font("DejaVu", "B", 12.5 * k)
         pdf.set_text_color(*rgb(CARAMELO))
-        pdf.cell(0, 8, texto.upper(), new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 7.5 * k, texto.upper(), new_x="LMARGIN", new_y="NEXT")
         pdf.set_text_color(*rgb(ESPRESSO))
 
     # ---------- Página 1: tu resultado ----------
     pdf.add_page()
     pdf.set_fill_color(*rgb(ESPRESSO))
-    pdf.rect(0, 0, 210, 52, style="F")
-    pdf.set_xy(15, 12)
+    pdf.rect(0, 0, 210, 48, style="F")
+    pdf.set_xy(15, 10)
     pdf.set_font("DejaVu", "B", 11)
     pdf.set_text_color(*rgb(CARAMELO))
     pdf.cell(0, 6, f"ECONOMÍA EN 4 MINUTOS  ·  {datetime.now().strftime('%d/%m/%Y')}", new_x="LMARGIN", new_y="NEXT")
@@ -731,75 +766,108 @@ def informe_pdf(resp, aciertos, notas, perfil, devolucion_texto, calculo):
     pdf.set_text_color(*rgb(CARAMELO))
     pdf.cell(0, 10, f"Sos {perfil['nombre']}", new_x="LMARGIN", new_y="NEXT")
 
-    pdf.set_y(60)
+    pdf.set_y(54)
     pdf.set_text_color(*rgb(ESPRESSO))
-    pdf.set_font("DejaVu", "", 11)
-    pdf.multi_cell(ancho, 6, perfil["texto"])
-    pdf.ln(2)
-    pdf.set_font("DejaVu", "B", 11)
+    pdf.set_font("DejaVu", "", 10.5 * k)
+    pdf.multi_cell(ancho, 5.6 * k, perfil["texto"])
+    pdf.ln(1.5)
+    pdf.set_font("DejaVu", "B", 10.5 * k)
     pdf.cell(0, 7, f"Economía del país: {puntitos(notas['eco'])}  {notas['eco']} de {POR_AREA}      "
                    f"Tu dinero: {puntitos(notas['fin'])}  {notas['fin']} de {POR_AREA}", new_x="LMARGIN", new_y="NEXT")
 
-    y_cuadrado = pdf.get_y() + 3
-    pdf.image(imagen_cuadrado(notas), x=15, y=y_cuadrado, w=85)
+    y_cuadrado = pdf.get_y() + 2
+    lado = 80 * k
+    pdf.image(imagen_cuadrado(notas), x=15, y=y_cuadrado, w=lado)
     # Sobre vos, al lado del cuadrado
-    pdf.set_xy(108, y_cuadrado)
-    pdf.set_font("DejaVu", "B", 13)
+    pdf.set_xy(105, y_cuadrado)
+    pdf.set_font("DejaVu", "B", 12.5 * k)
     pdf.set_text_color(*rgb(CARAMELO))
-    pdf.cell(0, 8, "SOBRE VOS", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 7.5 * k, "SOBRE VOS", new_x="LMARGIN", new_y="NEXT")
     pdf.set_text_color(*rgb(ESPRESSO))
     datos = [("Edad", f"{resp['edad']} años"), ("Estudios", resp["educacion"]), ("Te informás por", resp["fuente_info"]),
              ("Con el dinero que te sobra", resp["dinero_que_sobra"]), ("¿Ahorrás para tu jubilación?", resp["ahorro_jubilacion"]),
              ("Al terminar, sentiste que sabés", resp["percepcion"])]
     for etiqueta, valor in datos:
-        pdf.set_x(108)
-        pdf.set_font("DejaVu", "B", 9)
-        pdf.cell(0, 5, etiqueta, new_x="LMARGIN", new_y="NEXT")
-        pdf.set_x(108)
-        pdf.set_font("DejaVu", "", 10)
-        pdf.multi_cell(87, 5, valor)
-        pdf.ln(1.5)
+        pdf.set_x(105)
+        pdf.set_font("DejaVu", "B", 9 * k)
+        pdf.cell(0, 4.8 * k, etiqueta, new_x="LMARGIN", new_y="NEXT")
+        pdf.set_x(105)
+        pdf.set_font("DejaVu", "", 9.5 * k)
+        pdf.multi_cell(90, 4.8 * k, valor)
+        pdf.ln(1.2 * k)
 
-    pdf.set_y(max(pdf.get_y(), y_cuadrado + 88))
+    pdf.set_y(max(pdf.get_y(), y_cuadrado + lado + 1))
     titulo_seccion("Tu devolución")
-    pdf.set_font("DejaVu", "", 11)
-    pdf.multi_cell(ancho, 6, sin_emojis(devolucion_texto))
+    pdf.set_font("DejaVu", "", 10.5 * k)
+    for parrafo in parrafos:
+        pdf.multi_cell(ancho, 5.5 * k, parrafo)
+        pdf.ln(1.2 * k)
+
+    titulo_seccion("¿Y ahora por dónde empiezo?")
+    sobra = resp["dinero_que_sobra"]
+    pdf.set_font("DejaVu", "", 10 * k)
+    pdf.multi_cell(ancho, 5.2 * k, sin_emojis(EMPEZAR.get(sobra, "")))
+    if not sobra.startswith("Lo invierto"):
+        pdf.ln(1)
+        pdf.set_font("DejaVu", "B", 10 * k)
+        pdf.cell(0, 5.5 * k, "Si querés empezar a invertir:", new_x="LMARGIN", new_y="NEXT")
+        for n, (paso, texto) in enumerate(PASOS_CORTOS, start=1):
+            pdf.set_x(18)
+            pdf.set_font("DejaVu", "", 10 * k)
+            pdf.multi_cell(ancho - 3, 5.2 * k, f"{n}. **{paso}** {texto}", markdown=True, align="L",
+                           new_x="LMARGIN", new_y="NEXT")
+
     titulo_seccion("Tu calculadora")
-    pdf.set_font("DejaVu", "", 10.5)
-    pdf.multi_cell(ancho, 5.6, f"Ahorrando USD {calculo['por_mes']} por mes al {calculo['tasa']}% anual, en {calculo['anios']} años "
-                               f"tendrías USD {miles(calculo['total'])}: vos pondrías USD {miles(calculo['aportado'])} y la bola "
-                               f"de nieve, USD {miles(calculo['intereses'])}.")
-    pdf.ln(4)
-    pdf.set_font("DejaVu", "B", 11)
+    pdf.set_font("DejaVu", "", 10 * k)
+    pdf.multi_cell(ancho, 5.2 * k, f"Ahorrando USD {calculo['por_mes']} por mes al {calculo['tasa']}% anual, en {calculo['anios']} años "
+                                   f"tendrías USD {miles(calculo['total'])}: vos pondrías USD {miles(calculo['aportado'])} y la bola "
+                                   f"de nieve, USD {miles(calculo['intereses'])}.")
+    pdf.ln(2.5 * k)
+    pdf.set_font("DejaVu", "B", 10.5 * k)
     pdf.set_text_color(*rgb(CHOCOLATE))
-    pdf.multi_cell(ancho, 6, "No necesitás estudiar Economía para que la economía importe en tu vida. Pero sí necesitás "
-                             "entenderla para que tus decisiones no dependan de la suerte.")
-    pdf.ln(2)
-    pdf.set_font("DejaVu", "", 10)
+    pdf.multi_cell(ancho, 5.6 * k, "No necesitás estudiar Economía para que la economía importe en tu vida. Pero sí necesitás "
+                                   "entenderla para que tus decisiones no dependan de la suerte.")
+    pdf.ln(1)
+    pdf.set_font("DejaVu", "", 9.5 * k)
     pdf.set_text_color(*rgb(CARAMELO))
-    pdf.cell(0, 6, f"¿Te animás a descubrir cuánto sabés? {LINK_APP}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 5.5 * k, f"¿Te animás a descubrir cuánto sabés? {LINK_APP}", new_x="LMARGIN", new_y="NEXT")
 
     # ---------- Página 2: lo que aprendiste ----------
     pdf.add_page()
-    pdf.set_font("DejaVu", "B", 22)
+    pdf.set_font("DejaVu", "B", 22 * k)
     pdf.set_text_color(*rgb(ESPRESSO))
-    pdf.cell(0, 12, "Lo que aprendiste", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("DejaVu", "", 10)
+    pdf.cell(0, 12 * k, "Lo que aprendiste", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("DejaVu", "", 10 * k)
     pdf.set_text_color(*rgb("#7A6656"))
-    pdf.cell(0, 6, "Los 10 conceptos del test, para releer cuando quieras.", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6 * k, "Los 10 conceptos del test, para releer cuando quieras.", new_x="LMARGIN", new_y="NEXT")
     for numero, p in enumerate(PREGUNTAS, start=1):
         concepto, puntos = APRENDIZAJES[p["id"]]
-        pdf.ln(1.3)
-        pdf.set_font("DejaVu", "B", 11)
+        pdf.ln(1.3 * k)
+        pdf.set_font("DejaVu", "B", 11 * k)
         pdf.set_text_color(*rgb(CHOCOLATE))
-        pdf.cell(0, 5.6, f"{numero}. {concepto}", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 5.6 * k, f"{numero}. {concepto}", new_x="LMARGIN", new_y="NEXT")
         pdf.set_text_color(*rgb(ESPRESSO))
-        pdf.set_font("DejaVu", "", 9.5)
+        pdf.set_font("DejaVu", "", 9.5 * k)
         for punto in puntos:
             pdf.set_x(18)
-            pdf.cell(5, 4.5, "•")
-            pdf.multi_cell(ancho - 8, 4.5, punto, align="L", new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(5, 4.5 * k, "•")
+            pdf.multi_cell(ancho - 8, 4.5 * k, punto, align="L", new_x="LMARGIN", new_y="NEXT")
+    return pdf
 
+
+def informe_pdf(resp, aciertos, notas, perfil, devolucion_texto, calculo):
+    """Informe en PDF, SIEMPRE en 2 hojas como máximo: si no entra, achica la letra; y si aun así no entra,
+    recorta la devolución por párrafos completos (nunca a la mitad de una frase)."""
+    parrafos = [x.strip() for x in sin_emojis(devolucion_texto).split("\n") if x.strip()]
+    for k in (1, 0.95, 0.9, 0.85, 0.8):
+        pdf = _armar_pdf(resp, aciertos, notas, perfil, parrafos, calculo, k)
+        if pdf.page_no() <= 2:
+            return bytes(pdf.output())
+    while len(parrafos) > 1:
+        parrafos = parrafos[:-1]
+        pdf = _armar_pdf(resp, aciertos, notas, perfil, parrafos, calculo, 0.8)
+        if pdf.page_no() <= 2:
+            break
     return bytes(pdf.output())
 
 
@@ -1035,8 +1103,15 @@ elif st.session_state.paso == "resultado":
     st.plotly_chart(grafico_crecimiento(tabla), use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
     calculo = {"por_mes": por_mes, "tasa": tasa, "anios": anios, "total": final["total"],
                "aportado": final["aportado"], "intereses": final["intereses"]}
-    st.markdown("💡 **No hace falta mucho:** empezar con el 5 o 10% de tu sueldo ya hace la diferencia. "
-                "Informate, preguntale a alguien que sepa, investigá. **Lo importante es arrancar.**")
+    # ----- ¿Y ahora por dónde empiezo? (según qué hace con el dinero que le sobra) -----
+    st.markdown("<div class='seccion'>🧭 ¿Y ahora por dónde empiezo?</div>", unsafe_allow_html=True)
+    sobra = resp["dinero_que_sobra"]
+    with st.container(border=True):
+        st.markdown(EMPEZAR.get(sobra, ""))
+    if not sobra.startswith("Lo invierto"):
+        st.markdown("**Si querés empezar a invertir:**")
+        for n, (paso, texto) in enumerate(PASOS_EMPEZAR, start=1):
+            st.markdown(f"**{n}. {paso}** {texto}")
 
     st.markdown("<div class='frase'>No necesitás estudiar Economía para que la economía importe en tu vida. "
                 "<span>Pero sí necesitás entenderla para que tus decisiones no dependan de la suerte.</span></div>",
@@ -1086,5 +1161,4 @@ elif st.session_state.paso == "resultado":
             st.markdown(f"**Tu pregunta:** {pregunta}")
             st.markdown(respuesta)
 
-    st.markdown("<div class='letra-chica'>Podés hacer hasta 3 preguntas. Las respuestas son educativas: para decisiones "
-                "importantes con tu dinero, consultá con un profesional.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='letra-chica'>Podés hacer hasta 3 preguntas.</div>", unsafe_allow_html=True)
