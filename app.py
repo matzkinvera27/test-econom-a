@@ -589,7 +589,7 @@ def preguntar_a_claude(prompt, max_tokens=600):
     else:
         try:
             import anthropic
-            cliente = anthropic.Anthropic(api_key=str(clave).strip())
+            cliente = anthropic.Anthropic(api_key=str(clave).strip(), timeout=25, max_retries=1)
             modelos = ([secreto("CLAUDE_MODEL")] if secreto("CLAUDE_MODEL") else []) + MODELOS_CLAUDE
             for modelo in modelos:
                 try:
@@ -1080,8 +1080,14 @@ elif st.session_state.paso == "resultado":
     aciertos = sum(acerto(p, resp[p["id"]]) for p in PREGUNTAS)
 
     if not st.session_state.guardado:
-        guardar({"fecha": datetime.now().isoformat(timespec="seconds"), **resp, "aciertos": aciertos,
-                 "nota_pais": notas["eco"], "nota_dinero": notas["fin"], "perfil": perfil["nombre"]})
+        fila = {"fecha": datetime.now().isoformat(timespec="seconds"), **resp, "aciertos": aciertos,
+                "nota_pais": notas["eco"], "nota_dinero": notas["fin"], "perfil": perfil["nombre"]}
+        if DEBUG:
+            guardar(fila)
+        else:
+            # se guarda en segundo plano: la persona ve su resultado al instante, sin esperar a la planilla
+            import threading
+            threading.Thread(target=guardar, args=(fila,), daemon=True).start()
         st.session_state.guardado = True
 
     st.markdown("<div class='etiqueta'>Tu resultado</div>", unsafe_allow_html=True)
@@ -1098,7 +1104,7 @@ elif st.session_state.paso == "resultado":
     st.plotly_chart(grafico_cuadrado(notas), use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
 
     if "devolucion" not in st.session_state:
-        with st.spinner("Analizando tus respuestas..."):
+        with st.spinner("Escribiendo tu devolución… puede tardar unos segundos ⏳"):
             st.session_state.devolucion = devolucion(resp, notas, perfil, aciertos)
     st.markdown("<div class='seccion'>Tu devolución</div>", unsafe_allow_html=True)
     with st.container(border=True):
@@ -1155,11 +1161,16 @@ elif st.session_state.paso == "resultado":
     # ----- Descargas: informe completo (PDF) y tarjeta para compartir (imagen) -----
     st.markdown("<div class='seccion'>📥 Llevate tu resultado</div>", unsafe_allow_html=True)
     st.markdown("Un informe con tu resultado, tu devolución y **todo lo que aprendiste**, para releer cuando quieras.")
+    # El PDF y la tarjeta se arman recién cuando la persona toca el botón (así la pantalla no se pone lenta)
+    devol_txt = st.session_state.devolucion
     d1, d2 = st.columns(2)
-    d1.download_button("📄 Informe completo (PDF)", data=informe_pdf(resp, aciertos, notas, perfil, st.session_state.devolucion, calculo),
-                       file_name="mi-informe-economia-en-4-minutos.pdf", mime="application/pdf", use_container_width=True, type="primary")
-    d2.download_button("🖼️ Tarjeta para compartir", data=tarjeta_resultado(aciertos, notas, perfil),
-                       file_name="mi-resultado-economia-en-4-minutos.png", mime="image/png", use_container_width=True)
+    d1.download_button("📄 Informe completo (PDF)",
+                       data=lambda: informe_pdf(resp, aciertos, notas, perfil, devol_txt, dict(calculo)),
+                       file_name="mi-informe-economia-en-4-minutos.pdf", mime="application/pdf",
+                       use_container_width=True, type="primary", on_click="ignore")
+    d2.download_button("🖼️ Tarjeta para compartir", data=lambda: tarjeta_resultado(aciertos, notas, perfil),
+                       file_name="mi-resultado-economia-en-4-minutos.png", mime="image/png",
+                       use_container_width=True, on_click="ignore")
 
     # ----- Compartir por WhatsApp -----
     st.markdown("<div class='seccion'>¿Te animás a desafiar a alguien?</div>", unsafe_allow_html=True)
