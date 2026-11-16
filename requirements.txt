@@ -5,3 +5,4 @@ gspread
 anthropic
 pillow
 fpdf2
+requests

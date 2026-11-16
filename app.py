@@ -534,7 +534,24 @@ def credenciales_google():
 
 
 def guardar(fila, hoja_nombre="respuestas"):
-    """Guarda una fila en Google Sheets (si está configurado) o en un CSV local (para pruebas)."""
+    """Guarda una fila en Google Sheets (si está configurado) o en un CSV local (para pruebas).
+    Camino 1 (el que usamos): un Apps Script pegado en la planilla que recibe los datos (secreto sheet_webhook).
+    Camino 2: cuenta de servicio de Google Cloud (gcp_json + sheet_url)."""
+    if secreto("sheet_webhook"):
+        try:
+            import requests
+            r = requests.post(secreto("sheet_webhook"), timeout=15,
+                              json={"token": secreto("sheet_token") or "", "hoja": hoja_nombre,
+                                    "fila": {k: str(v) for k, v in fila.items()}})
+            if r.ok and "ok" in r.text:
+                if DEBUG:
+                    st.success(f"✅ Guardado en Google Sheets (hoja '{hoja_nombre}').")
+                return
+            if DEBUG:
+                st.error(f"La planilla respondió: {r.status_code} {r.text[:200]}")
+        except Exception as e:
+            if DEBUG:
+                st.error(f"No pude guardar en Google Sheets: {type(e).__name__}: {e}")
     try:
         credenciales = credenciales_google()
         if credenciales and secreto("sheet_url"):
