@@ -520,12 +520,26 @@ def grafico_crecimiento(tabla):
     return layout_base(fig, 340)
 
 
+DEBUG = st.query_params.get("debug") == "1"   # entrar con ?debug=1 muestra los errores de la IA (solo para Vera)
+
+
+def credenciales_google():
+    """Lee la cuenta de servicio de Google desde los Secrets: o pegada entera como texto (gcp_json) o como tabla."""
+    import json
+    if secreto("gcp_json"):
+        return json.loads(secreto("gcp_json"))
+    if secreto("gcp_service_account"):
+        return dict(secreto("gcp_service_account"))
+    return None
+
+
 def guardar(fila, hoja_nombre="respuestas"):
     """Guarda una fila en Google Sheets (si está configurado) o en un CSV local (para pruebas)."""
     try:
-        if secreto("gcp_service_account") and secreto("sheet_url"):
+        credenciales = credenciales_google()
+        if credenciales and secreto("sheet_url"):
             import gspread
-            cliente = gspread.service_account_from_dict(dict(secreto("gcp_service_account")))
+            cliente = gspread.service_account_from_dict(credenciales)
             libro = cliente.open_by_url(secreto("sheet_url"))
             try:
                 hoja = libro.worksheet(hoja_nombre)
@@ -534,15 +548,19 @@ def guardar(fila, hoja_nombre="respuestas"):
             if not hoja.row_values(1):
                 hoja.append_row(list(fila.keys()))
             hoja.append_row([str(v) for v in fila.values()])
+            if DEBUG:
+                st.success(f"✅ Guardado en Google Sheets (hoja '{hoja_nombre}').")
             return
-    except Exception:
-        pass
+        if DEBUG:
+            st.warning("Google Sheets no está configurado (falta gcp_json o sheet_url): guardo en CSV local.")
+    except Exception as e:
+        if DEBUG:
+            st.error(f"No pude guardar en Google Sheets: {type(e).__name__}: {e}")
     archivo = Path(f"{hoja_nombre}.csv")
     pd.DataFrame([fila]).to_csv(archivo, mode="a", header=not archivo.exists(), index=False)
 
 
 MODELOS_CLAUDE = ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-haiku-4-5", "claude-sonnet-4-5", "claude-3-5-haiku-latest"]
-DEBUG = st.query_params.get("debug") == "1"   # entrar con ?debug=1 muestra los errores de la IA (solo para Vera)
 
 
 def preguntar_a_claude(prompt, max_tokens=600):
