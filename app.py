@@ -296,6 +296,44 @@ Por eso, <b>cuando sube el dólar en Argentina, primero suben las cosas atadas a
 hasta productos que no tienen nada que ver. Y por eso todos miramos el dólar todo el tiempo. 👀"""},
 ]
 
+# Lo que se aprende en cada pregunta, en punteo (va en la página 2 del informe PDF)
+APRENDIZAJES = {
+    "interes_compuesto": ("Interés compuesto", [
+        "Cada año ganás intereses sobre los intereses que ya ganaste: USD 1.000 al 10% anual se hacen USD 1.100, después USD 1.210, después USD 1.331.",
+        "A los 10 años son USD 2.594 (no 2.000) y a los 30 años, USD 17.449, sin poner un peso más.",
+        "Lo que más pesa no es cuánto ponés, sino cuánto tiempo lo dejás crecer: conviene empezar cuanto antes."]),
+    "en_blanco": ("Trabajo en blanco", [
+        "De cada 10 personas que trabajan o buscan trabajo en Argentina, solo 5 tienen un empleo en blanco: 4 trabajan en negro y 1 busca trabajo.",
+        "Con los aportes de esos 5 se financian, entre otras cosas, las jubilaciones. Con tan pocos aportando, los números no cierran."]),
+    "impuestos": ("Presión fiscal", [
+        "Una empresa en blanco paga unos $56 de impuestos por cada $100 que gana (UIA, 2026): Argentina es 1ª de 30 países en ese ranking.",
+        "En presión fiscal total, Argentina está 12ª. Como muchos trabajan en negro, pagan pocos, y los que pagan, pagan por todos."]),
+    "la_vara": ("La vara: la inversión más segura", [
+        "Los bonos del Tesoro de EE.UU. se consideran la inversión más segura del mundo.",
+        "Pagan alrededor de 5% por año en dólares, casi sin riesgo. Esa es \"la vara\": cualquier inversión o negocio tiene que ganarle."]),
+    "franquicia": ("Costo de oportunidad", [
+        "Un negocio que rinde 4% en dólares gana menos que la vara del 5%, y encima tiene riesgo y requiere trabajo.",
+        "El costo de oportunidad es lo que dejás de ganar por elegir una opción y no otra.",
+        "Para medir un negocio: ganancia de un año ÷ dinero invertido. Si no le gana a la vara por bastante, hay que exprimirlo más."]),
+    "emision": ("Emisión e inflación", [
+        "Si un país imprime muchos más billetes pero produce los mismos bienes y servicios, cada billete compra menos: suben los precios.",
+        "Como una pizza de 8 porciones: si se imprimen el doble de tickets para canjearla, cada ticket alcanza para media porción."]),
+    "tasa_real": ("Tasa real", [
+        "Si tus $100.000 rinden 40% pero la inflación es 50%, tenés $140.000… pero el changuito que costaba $100.000 ahora cuesta $150.000.",
+        "Tener más pesos no significa poder comprar más. Lo que importa es la tasa real: si tu dinero rinde más que la inflación."]),
+    "banco_central": ("La tasa de interés del Banco Central", [
+        "La tasa de interés es el \"precio\" del dinero. Cuando el Banco Central la sube, endeudarse sale más caro y ahorrar rinde más.",
+        "La gente gasta menos y los precios suben más despacio: es un freno a la inflación, pero también a la economía."]),
+    "dolar": ("Devaluación", [
+        "Si el dólar pasa de $1.000 a $1.500, el peso pierde valor: eso es una devaluación.",
+        "Suben primero los productos importados y lo atado al dólar, como el combustible.",
+        "Después el aumento se contagia: combustible → flete → harina → pan. Por eso en Argentina todos miramos el dólar."]),
+    "colchon": ("El dólar en el colchón", [
+        "El dólar te protege de la devaluación del peso, pero no de la inflación de EE.UU. (en promedio, 3% por año).",
+        "USD 100 guardados 10 años compran lo mismo que hoy USD 74. Invertidos al 5%, serían USD 163.",
+        "El dólar quieto también pierde. El dólar invertido, crece."]),
+}
+
 # Orden en que aparecen: intercaladas, respetando las que se nombran entre sí
 # (la vara → franquicia, asado → impuestos, la vara → colchón)
 ORDEN = ["interes_compuesto", "en_blanco", "impuestos", "la_vara", "franquicia",
@@ -547,14 +585,15 @@ def devolucion(resp, notas, perfil, aciertos):
 Una persona acaba de hacer un test de economía y finanzas personales. Resultados:
 {chr(10).join(lineas)}
 
-Escribile una devolución personalizada en español rioplatense (voseo), de 200 a 250 palabras.
+Escribile una devolución personalizada en español rioplatense (voseo), de 100 a 130 palabras como máximo,
+en 3 o 4 párrafos MUY cortos (de 1 a 3 líneas cada uno), porque se lee en el celular.
 Hablale directo a ESA persona, como una amiga que sabe del tema: usá sus datos (su edad, qué hace con el dinero que le sobra,
 si ahorra para la jubilación y cómo se sintió al terminar el test) para que sienta que el texto es sobre ella, no genérico.
 1. Una primera frase con gancho que conecte su perfil con algo de su vida.
-2. Lo que hizo bien (reconocelo de verdad).
-3. Lo más importante que se le escapó y por qué le importa en su vida diaria, con un ejemplo concreto.
-4. Dos acciones concretas para esta semana, según lo que hoy hace con su dinero.
-5. Un cierre cálido que la deje con ganas de informarse más.
+2. Lo más importante que se le escapó y por qué le importa, en una o dos frases.
+3. Una acción concreta para esta semana, según lo que hoy hace con su dinero.
+4. Un cierre cálido y corto que la deje con ganas de informarse más.
+Ortografía: el nombre del país se escribe siempre con mayúscula (Argentina).
 Sin títulos. Podés usar **negrita** para 2 o 3 ideas clave. Usá "dinero", no "plata".
 No recomiendes productos, bancos ni empresas específicas. No opines de política."""
     respuesta = preguntar_a_claude(prompt)
@@ -617,6 +656,151 @@ def tarjeta_resultado(aciertos, notas, perfil):
     buffer = io.BytesIO()
     img.save(buffer, format="PNG")
     return buffer.getvalue()
+
+
+def sin_emojis(texto):
+    """Las letras del PDF no tienen emojis: los sacamos (y también la negrita de markdown)."""
+    import re
+    texto = re.sub(r"[\U00010000-\U0010FFFF\u2600-\u27BF\uFE0F\u200D\u2B50\u2B06\u2194]", "", texto)
+    return texto.replace("**", "").replace("*", "").replace("  ", " ").strip()
+
+
+def imagen_cuadrado(notas):
+    """Dibuja el cuadrado de perfiles con el punto de la persona (como imagen, para el PDF)."""
+    import io
+    from PIL import Image, ImageDraw, ImageFont
+    fuente = lambda t: ImageFont.truetype(str(Path(__file__).parent / "fonts" / "DejaVuSans.ttf"), t)
+    W = 800
+    img = Image.new("RGB", (W, W), CREMA)
+    d = ImageDraw.Draw(img)
+    m, lado = 70, W - 110
+    mitad = lado // 2
+    zonas = [((0, 0), "#EADCCB", ("alto", "bajo")), ((1, 0), "#D9BC98", ("alto", "alto")),
+             ((0, 1), "#F3EAE0", ("bajo", "bajo")), ((1, 1), "#E4CCAE", ("bajo", "alto"))]
+    for (cx, cy), color, clave in zonas:
+        x0, y0 = m + cx * mitad, 20 + cy * mitad
+        d.rectangle((x0, y0, x0 + mitad, y0 + mitad), fill=color)
+        d.text((x0 + 14, y0 + 12), PERFILES[clave]["nombre"], font=fuente(24), fill=CHOCOLATE)
+    px = m + notas["fin"] / POR_AREA * lado
+    py = 20 + lado - notas["eco"] / POR_AREA * lado
+    px, py = min(max(px, m + 22), m + lado - 22), min(max(py, 42), 20 + lado - 22)
+    d.ellipse((px - 18, py - 18, px + 18, py + 18), fill=ESPRESSO, outline="white", width=5)
+    d.text((px + 26, py - 16), "VOS", font=fuente(28), fill=ESPRESSO)
+    d.text((m + lado // 2 - 70, 20 + lado + 18), "Tu dinero →", font=fuente(26), fill=CHOCOLATE)
+    eje = Image.new("RGBA", (220, 40), (0, 0, 0, 0))
+    ImageDraw.Draw(eje).text((0, 0), "El país →", font=fuente(26), fill=CHOCOLATE)
+    img.paste(eje.rotate(90, expand=True), (16, 20 + lado // 2 - 110), eje.rotate(90, expand=True))
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+    return buffer
+
+
+def informe_pdf(resp, aciertos, notas, perfil, devolucion_texto, calculo):
+    """Arma el informe en PDF: página 1 = tu resultado; página 2 = lo que aprendiste."""
+    from fpdf import FPDF
+    carpeta = Path(__file__).parent / "fonts"
+    pdf = FPDF(format="A4")
+    pdf.set_auto_page_break(True, margin=10)
+    pdf.add_font("DejaVu", "", str(carpeta / "DejaVuSans.ttf"))
+    pdf.add_font("DejaVu", "B", str(carpeta / "DejaVuSans-Bold.ttf"))
+    rgb = lambda h: tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
+    ancho = 180
+
+    def titulo_seccion(texto):
+        pdf.ln(4)
+        pdf.set_font("DejaVu", "B", 13)
+        pdf.set_text_color(*rgb(CARAMELO))
+        pdf.cell(0, 8, texto.upper(), new_x="LMARGIN", new_y="NEXT")
+        pdf.set_text_color(*rgb(ESPRESSO))
+
+    # ---------- Página 1: tu resultado ----------
+    pdf.add_page()
+    pdf.set_fill_color(*rgb(ESPRESSO))
+    pdf.rect(0, 0, 210, 52, style="F")
+    pdf.set_xy(15, 12)
+    pdf.set_font("DejaVu", "B", 11)
+    pdf.set_text_color(*rgb(CARAMELO))
+    pdf.cell(0, 6, f"ECONOMÍA EN 4 MINUTOS  ·  {datetime.now().strftime('%d/%m/%Y')}", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_x(15)
+    pdf.set_font("DejaVu", "B", 30)
+    pdf.set_text_color(*rgb(CREMA))
+    pdf.cell(0, 16, f"Acertaste {aciertos} de {len(PREGUNTAS)}", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_x(15)
+    pdf.set_font("DejaVu", "B", 16)
+    pdf.set_text_color(*rgb(CARAMELO))
+    pdf.cell(0, 10, f"Sos {perfil['nombre']}", new_x="LMARGIN", new_y="NEXT")
+
+    pdf.set_y(60)
+    pdf.set_text_color(*rgb(ESPRESSO))
+    pdf.set_font("DejaVu", "", 11)
+    pdf.multi_cell(ancho, 6, perfil["texto"])
+    pdf.ln(2)
+    pdf.set_font("DejaVu", "B", 11)
+    pdf.cell(0, 7, f"Economía del país: {puntitos(notas['eco'])}  {notas['eco']} de {POR_AREA}      "
+                   f"Tu dinero: {puntitos(notas['fin'])}  {notas['fin']} de {POR_AREA}", new_x="LMARGIN", new_y="NEXT")
+
+    y_cuadrado = pdf.get_y() + 3
+    pdf.image(imagen_cuadrado(notas), x=15, y=y_cuadrado, w=85)
+    # Sobre vos, al lado del cuadrado
+    pdf.set_xy(108, y_cuadrado)
+    pdf.set_font("DejaVu", "B", 13)
+    pdf.set_text_color(*rgb(CARAMELO))
+    pdf.cell(0, 8, "SOBRE VOS", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(*rgb(ESPRESSO))
+    datos = [("Edad", f"{resp['edad']} años"), ("Estudios", resp["educacion"]), ("Te informás por", resp["fuente_info"]),
+             ("Con el dinero que te sobra", resp["dinero_que_sobra"]), ("¿Ahorrás para tu jubilación?", resp["ahorro_jubilacion"]),
+             ("Al terminar, sentiste que sabés", resp["percepcion"])]
+    for etiqueta, valor in datos:
+        pdf.set_x(108)
+        pdf.set_font("DejaVu", "B", 9)
+        pdf.cell(0, 5, etiqueta, new_x="LMARGIN", new_y="NEXT")
+        pdf.set_x(108)
+        pdf.set_font("DejaVu", "", 10)
+        pdf.multi_cell(87, 5, valor)
+        pdf.ln(1.5)
+
+    pdf.set_y(max(pdf.get_y(), y_cuadrado + 88))
+    titulo_seccion("Tu devolución")
+    pdf.set_font("DejaVu", "", 11)
+    pdf.multi_cell(ancho, 6, sin_emojis(devolucion_texto))
+    titulo_seccion("Tu calculadora")
+    pdf.set_font("DejaVu", "", 10.5)
+    pdf.multi_cell(ancho, 5.6, f"Ahorrando USD {calculo['por_mes']} por mes al {calculo['tasa']}% anual, en {calculo['anios']} años "
+                               f"tendrías USD {miles(calculo['total'])}: vos pondrías USD {miles(calculo['aportado'])} y la bola "
+                               f"de nieve, USD {miles(calculo['intereses'])}.")
+    pdf.ln(4)
+    pdf.set_font("DejaVu", "B", 11)
+    pdf.set_text_color(*rgb(CHOCOLATE))
+    pdf.multi_cell(ancho, 6, "No necesitás estudiar Economía para que la economía importe en tu vida. Pero sí necesitás "
+                             "entenderla para que tus decisiones no dependan de la suerte.")
+    pdf.ln(2)
+    pdf.set_font("DejaVu", "", 10)
+    pdf.set_text_color(*rgb(CARAMELO))
+    pdf.cell(0, 6, f"¿Te animás a descubrir cuánto sabés? {LINK_APP}", new_x="LMARGIN", new_y="NEXT")
+
+    # ---------- Página 2: lo que aprendiste ----------
+    pdf.add_page()
+    pdf.set_font("DejaVu", "B", 22)
+    pdf.set_text_color(*rgb(ESPRESSO))
+    pdf.cell(0, 12, "Lo que aprendiste", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("DejaVu", "", 10)
+    pdf.set_text_color(*rgb("#7A6656"))
+    pdf.cell(0, 6, "Los 10 conceptos del test, para releer cuando quieras.", new_x="LMARGIN", new_y="NEXT")
+    for numero, p in enumerate(PREGUNTAS, start=1):
+        concepto, puntos = APRENDIZAJES[p["id"]]
+        pdf.ln(1.3)
+        pdf.set_font("DejaVu", "B", 11)
+        pdf.set_text_color(*rgb(CHOCOLATE))
+        pdf.cell(0, 5.6, f"{numero}. {concepto}", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_text_color(*rgb(ESPRESSO))
+        pdf.set_font("DejaVu", "", 9.5)
+        for punto in puntos:
+            pdf.set_x(18)
+            pdf.cell(5, 4.5, "•")
+            pdf.multi_cell(ancho - 8, 4.5, punto, align="L", new_x="LMARGIN", new_y="NEXT")
+
+    return bytes(pdf.output())
 
 
 def responder_consulta(texto, edad, aciertos):
@@ -831,9 +1015,6 @@ elif st.session_state.paso == "resultado":
         cierre = "⛄ <b>Es momento de ordenar y proteger lo que ahorraste,</b> y de que cada peso que sumes trabaje para vos."
     st.markdown(f"<div class='destacado'>{cierre}</div>", unsafe_allow_html=True)
 
-    st.download_button("📥 Descargá tu resultado", data=tarjeta_resultado(aciertos, notas, perfil),
-                       file_name="mi-resultado-economia-en-4-minutos.png", mime="image/png", use_container_width=True)
-
     st.markdown("<div class='seccion'>🧮 Calculadora de inversión</div>", unsafe_allow_html=True)
     st.markdown("<div class='pista'>👉 Mové las barritas ← → y mirá cómo crece tu dinero</div>", unsafe_allow_html=True)
     anios = max(65 - edad, 10)   # hasta los 65; si falta poco, mostramos 10 años
@@ -852,12 +1033,23 @@ elif st.session_state.paso == "resultado":
         m2.metric("Si esperás 10 años para empezar", f"USD {miles(simular_ahorro(por_mes, anios - 10, tasa / 100).iloc[-1]['total'])}")
     st.markdown(f"Vos pusiste **USD {miles(final['aportado'])}**. La bola de nieve puso **USD {miles(final['intereses'])}**. ⛄")
     st.plotly_chart(grafico_crecimiento(tabla), use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
+    calculo = {"por_mes": por_mes, "tasa": tasa, "anios": anios, "total": final["total"],
+               "aportado": final["aportado"], "intereses": final["intereses"]}
     st.markdown("💡 **No hace falta mucho:** empezar con el 5 o 10% de tu sueldo ya hace la diferencia. "
                 "Informate, preguntale a alguien que sepa, investigá. **Lo importante es arrancar.**")
 
     st.markdown("<div class='frase'>No necesitás estudiar Economía para que la economía importe en tu vida. "
                 "<span>Pero sí necesitás entenderla para que tus decisiones no dependan de la suerte.</span></div>",
                 unsafe_allow_html=True)
+
+    # ----- Descargas: informe completo (PDF) y tarjeta para compartir (imagen) -----
+    st.markdown("<div class='seccion'>📥 Llevate tu resultado</div>", unsafe_allow_html=True)
+    st.markdown("Un informe con tu resultado, tu devolución y **todo lo que aprendiste**, para releer cuando quieras.")
+    d1, d2 = st.columns(2)
+    d1.download_button("📄 Informe completo (PDF)", data=informe_pdf(resp, aciertos, notas, perfil, st.session_state.devolucion, calculo),
+                       file_name="mi-informe-economia-en-4-minutos.pdf", mime="application/pdf", use_container_width=True, type="primary")
+    d2.download_button("🖼️ Tarjeta para compartir", data=tarjeta_resultado(aciertos, notas, perfil),
+                       file_name="mi-resultado-economia-en-4-minutos.png", mime="image/png", use_container_width=True)
 
     # ----- Compartir por WhatsApp -----
     st.markdown("<div class='seccion'>¿Te animás a desafiar a alguien?</div>", unsafe_allow_html=True)
