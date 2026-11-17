@@ -14,6 +14,9 @@
 import random
 import urllib.parse
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+HORA_ARG = ZoneInfo("America/Argentina/Buenos_Aires")   # el servidor de Streamlit está en hora UTC
 from pathlib import Path
 
 import pandas as pd
@@ -800,7 +803,7 @@ def _armar_pdf(resp, aciertos, notas, perfil, parrafos, calculo, k):
     pdf.set_xy(15, 10)
     pdf.set_font("DejaVu", "B", 11)
     pdf.set_text_color(*rgb(CARAMELO))
-    pdf.cell(0, 6, f"ECONOMÍA EN 4 MINUTOS  ·  {datetime.now().strftime('%d/%m/%Y')}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, f"ECONOMÍA EN 4 MINUTOS  ·  {datetime.now(HORA_ARG).strftime('%d/%m/%Y')}", new_x="LMARGIN", new_y="NEXT")
     pdf.set_x(15)
     pdf.set_font("DejaVu", "B", 30)
     pdf.set_text_color(*rgb(CREMA))
@@ -921,7 +924,7 @@ def responder_consulta(texto, edad, aciertos):
     guardadas = st.session_state.setdefault("consultas_guardadas", set())
     if texto not in guardadas:   # se guarda una sola vez en la planilla
         guardadas.add(texto)
-        guardar({"fecha": datetime.now().isoformat(timespec="seconds"), "edad": edad, "aciertos": aciertos,
+        guardar({"fecha": datetime.now(HORA_ARG).strftime("%Y-%m-%d %H:%M:%S"), "edad": edad, "aciertos": aciertos,
                  "pregunta": texto}, hoja_nombre="preguntas")
     with st.spinner("Pensando..."):
         respuesta = preguntar_a_claude(
@@ -1094,7 +1097,7 @@ elif st.session_state.paso == "resultado":
     aciertos = sum(acerto(p, resp[p["id"]]) for p in PREGUNTAS)
 
     if not st.session_state.guardado:
-        fila = {"fecha": datetime.now().isoformat(timespec="seconds"), **resp, "aciertos": aciertos,
+        fila = {"fecha": datetime.now(HORA_ARG).strftime("%Y-%m-%d %H:%M:%S"), **resp, "aciertos": aciertos,
                 "nota_pais": notas["eco"], "nota_dinero": notas["fin"], "perfil": perfil["nombre"]}
         if DEBUG:
             guardar(fila)
