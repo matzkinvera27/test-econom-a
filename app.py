@@ -1006,25 +1006,35 @@ if st.session_state.paso == "inicio":
 elif st.session_state.paso == "sobre_vos":
     st.markdown("<div class='etiqueta'>Antes de arrancar</div>", unsafe_allow_html=True)
     st.markdown("<div class='pregunta'>Contanos un poco de vos</div>", unsafe_allow_html=True)
-    with st.form("sobre_vos"):
-        edad = st.number_input("Edad", min_value=14, max_value=100, value=None, placeholder="Escribí tu edad")
-        educacion = st.selectbox("Nivel educativo máximo", ["Secundario incompleto", "Secundario completo",
-                                 "Terciario o universitario en curso", "Terciario o universitario completo", "Posgrado"],
-                                 index=None, placeholder="Elegí una opción")
-        fuente = st.selectbox("¿Por dónde te informás principalmente?", ["Redes sociales", "TV", "Diarios o portales",
-                              "Radio o streaming", "Casi no me informo"], index=None, placeholder="Elegí una opción")
-        sobra = st.multiselect("¿Qué hacés con el dinero que te sobra a fin de mes? (podés elegir más de una)",
-                               OPCIONES_SOBRA, placeholder="Elegí una o más opciones")
-        st.write("")
-        if st.form_submit_button("Seguir →", type="primary", use_container_width=True):
-            if None in (edad, educacion, fuente) or not sobra:
-                st.error("Completá todo para seguir.")
-            elif "No me sobra" in sobra and len(sobra) > 1:
-                st.error("Si no te sobra dinero, dejá marcada solo esa opción 🙂")
-            else:
-                st.session_state.resp.update({"edad": edad, "educacion": educacion, "fuente_info": fuente,
-                                              "dinero_que_sobra": " / ".join(o for o in OPCIONES_SOBRA if o in sobra)})
-                ir_a("preguntas")
+    edad = st.number_input("Edad", min_value=14, max_value=100, value=None, placeholder="Escribí tu edad")
+    educacion = st.selectbox("Nivel educativo máximo", ["Secundario incompleto", "Secundario completo",
+                             "Terciario o universitario en curso", "Terciario o universitario completo", "Posgrado"],
+                             index=None, placeholder="Elegí una opción")
+    fuente = st.selectbox("¿Por dónde te informás principalmente?", ["Redes sociales", "TV", "Diarios o portales",
+                          "Radio o streaming", "Casi no me informo"], index=None, placeholder="Elegí una opción")
+
+    def ordenar_sobra():
+        """'No me sobra' no se combina: si la tocás, se desmarca el resto; si tocás otra, se desmarca 'No me sobra'."""
+        actual = st.session_state.sobra_sel or []
+        antes = st.session_state.get("sobra_antes", [])
+        nuevas = [o for o in actual if o not in antes]
+        if "No me sobra" in nuevas:
+            actual = ["No me sobra"]
+        elif "No me sobra" in actual and nuevas:
+            actual = [o for o in actual if o != "No me sobra"]
+        st.session_state.sobra_sel = actual
+        st.session_state.sobra_antes = actual
+
+    sobra = st.pills("¿Qué hacés con el dinero que te sobra a fin de mes? (podés elegir más de una)", OPCIONES_SOBRA,
+                     selection_mode="multi", key="sobra_sel", on_change=ordenar_sobra)
+    st.write("")
+    if st.button("Seguir →", type="primary", use_container_width=True):
+        if None in (edad, educacion, fuente) or not sobra:
+            st.error("Completá todo para seguir.")
+        else:
+            st.session_state.resp.update({"edad": edad, "educacion": educacion, "fuente_info": fuente,
+                                          "dinero_que_sobra": " / ".join(o for o in OPCIONES_SOBRA if o in sobra)})
+            ir_a("preguntas")
 
 # ---------- PREGUNTAS (una por pantalla, con devolución inmediata) ----------
 elif st.session_state.paso == "preguntas":
