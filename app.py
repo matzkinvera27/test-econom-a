@@ -706,6 +706,19 @@ def tarjeta_resultado(aciertos, notas, perfil):
     return buffer.getvalue()
 
 # Mensaje de cierre según qué hace con el dinero que le sobra (primera pantalla)
+OPCIONES_SOBRA = ["No me sobra", "Lo gasto", "Lo dejo en la cuenta o billetera virtual", "Plazo fijo",
+                  "Compro dólares", "Lo invierto (acciones, bonos, FCI, cripto)"]
+
+
+def sobra_principal(texto):
+    """Si eligió varias opciones (separadas por ' / '), devuelve la más avanzada, para elegir el mensaje de cierre."""
+    elegidas = texto.split(" / ")
+    for opcion in reversed(OPCIONES_SOBRA):   # de la más avanzada (invierte) a la menos
+        if opcion in elegidas:
+            return opcion
+    return elegidas[0]
+
+
 EMPEZAR = {
     "No me sobra": "Llegar a fin de mes ya es un montón, y hay meses en los que directamente no se puede. Si en algún "
                    "momento tenés un margen, probá esto: en vez de ahorrar lo que sobra a fin de mes, **separá un poquito "
@@ -851,7 +864,7 @@ def _armar_pdf(resp, aciertos, notas, perfil, parrafos, calculo, k):
         pdf.ln(1.2 * k)
 
     titulo_seccion("¿Y ahora por dónde empiezo?")
-    sobra = resp["dinero_que_sobra"]
+    sobra = sobra_principal(resp["dinero_que_sobra"])
     pdf.set_font("DejaVu", "", 10 * k)
     pdf.multi_cell(ancho, 5.2 * k, sin_emojis(EMPEZAR.get(sobra, "")))
     if not sobra.startswith("Lo invierto"):
@@ -1000,17 +1013,17 @@ elif st.session_state.paso == "sobre_vos":
                                  index=None, placeholder="Elegí una opción")
         fuente = st.selectbox("¿Por dónde te informás principalmente?", ["Redes sociales", "TV", "Diarios o portales",
                               "Radio o streaming", "Casi no me informo"], index=None, placeholder="Elegí una opción")
-        sobra = st.selectbox("¿Qué hacés con el dinero que te sobra a fin de mes?",
-                             ["No me sobra", "Lo gasto", "Lo dejo en la cuenta o billetera virtual", "Plazo fijo",
-                              "Compro dólares", "Lo invierto (acciones, bonos, FCI, cripto)"],
-                             index=None, placeholder="Elegí una opción")
+        sobra = st.multiselect("¿Qué hacés con el dinero que te sobra a fin de mes? (podés elegir más de una)",
+                               OPCIONES_SOBRA, placeholder="Elegí una o más opciones")
         st.write("")
         if st.form_submit_button("Seguir →", type="primary", use_container_width=True):
-            if None in (edad, educacion, fuente, sobra):
+            if None in (edad, educacion, fuente) or not sobra:
                 st.error("Completá todo para seguir.")
+            elif "No me sobra" in sobra and len(sobra) > 1:
+                st.error("Si no te sobra dinero, dejá marcada solo esa opción 🙂")
             else:
                 st.session_state.resp.update({"edad": edad, "educacion": educacion, "fuente_info": fuente,
-                                              "dinero_que_sobra": sobra})
+                                              "dinero_que_sobra": " / ".join(o for o in OPCIONES_SOBRA if o in sobra)})
                 ir_a("preguntas")
 
 # ---------- PREGUNTAS (una por pantalla, con devolución inmediata) ----------
@@ -1163,7 +1176,7 @@ elif st.session_state.paso == "resultado":
                "aportado": final["aportado"], "intereses": final["intereses"]}
     # ----- ¿Y ahora por dónde empiezo? (según qué hace con el dinero que le sobra) -----
     st.markdown("<div class='seccion'>🧭 ¿Y ahora por dónde empiezo?</div>", unsafe_allow_html=True)
-    sobra = resp["dinero_que_sobra"]
+    sobra = sobra_principal(resp["dinero_que_sobra"])
     with st.container(border=True):
         st.markdown(EMPEZAR.get(sobra, ""))
     if not sobra.startswith("Lo invierto"):
