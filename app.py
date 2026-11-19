@@ -1049,8 +1049,10 @@ elif st.session_state.paso == "preguntas":
             if p["tipo"] == "numero":
                 # Sin valor inicial a propósito: un número precargado "sopla" la respuesta (sesgo de anclaje)
                 unidad = (p["prefijo"] + p["sufijo"]).strip()
-                valor = st.number_input(f"Tu respuesta ({unidad})", min_value=0.0, max_value=float(p["max"]), value=None,
-                                        step=p["paso"], format="%g", placeholder="Escribí un número")
+                # Botones para tocar (sin teclado: en el celular el teclado numérico trababa el "Responder")
+                salto = 1 if p["max"] <= 10 else 5
+                valor = st.pills(f"Tocá tu respuesta ({unidad})", list(range(0, int(p["max"]) + 1, salto)),
+                                 format_func=lambda v: f"{p['prefijo']}{v}", selection_mode="single", default=None)
             else:
                 valor = st.radio("Respuesta", opciones_mezcladas(p), index=None, label_visibility="collapsed")
             st.write("")
